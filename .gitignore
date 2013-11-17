@@ -1,0 +1,25 @@
+#### ignore specific files ###
+
+#### ignore all vim swap files ###
+*.swp
+
+#### Linux build directories ####
+/build/debug/
+/build/release/
+
+#### Visual Studio 2012 ####
+/build/msvc2012/GMU/Debug/
+/build/msvc2012/GMU/Debug/*
+/build/msvc2012/GMU/Release/    
+/build/msvc2012/GMU/Release/*
+/build/msvc2012/GMU/*.sdf
+/build/msvc2012/GMU/*.opensdf
+/build/msvc2012/GMU/*.suo
+/build/msvc2012/GMU/*.user
+/build/msvc2012/GMU/*.filters
+/build/msvc2012/GMU/*.bmp
+/build/msvc2012/GMU/*.txt
+
+#### ignore  generated documentation ####
+/doc/generated/
+/doc/generated/*
