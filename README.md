@@ -12,7 +12,7 @@
   - u seba som nastavoval tieto veci v properties projektu:
   
      1.) `Configuration properties` | `Environment`
-          - tu som do premennej `PATH` cestu ku vsetkym kniniciam
+          - tu som do premennej `PATH` pridal cestu ku vsetkym kniniciam
           
      2.) `C/C++` | `General` | `Additional Include Directories`
           - tu som pridal cestu ku vsetkym hlavickovym suborom
