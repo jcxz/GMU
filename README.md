@@ -10,6 +10,7 @@
     V tomto pripade vsak treba zeditovat aj `.gitignore`, aby sa sa do repozitara
     nekomitovali hluposti (objektove subory, nastavenia visual studia, ...)
   - u seba som nastavoval tieto veci v properties projektu:
+  
      1.) `Configuration properties` | `Environment`
           - tu som do premennej `PATH` cestu ku vsetkym kniniciam
           
