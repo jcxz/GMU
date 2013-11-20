@@ -33,6 +33,16 @@ void Application::unregisterWindow(Window *wnd)
 }
 
 
+void Application::closeWindow(Window *wnd)
+{
+  assert(wnd != nullptr);
+  wnd->onClose();
+  m_windows.erase(wnd->getID());
+  delete wnd;
+  return;
+}
+
+
 bool Application::init(void)
 {
   std::cerr << __FUNCSIG__ << std::endl;
@@ -52,6 +62,7 @@ bool Application::init(void)
     if (IMG_Init(flags) != flags)
     {
       std::cerr << "Failed to intialize SDL_image: " << IMG_GetError() << std::endl;
+      SDL_Quit();
       return false;
     }
   }
@@ -62,6 +73,8 @@ bool Application::init(void)
   if (TTF_Init() < 0)
   {
     std::cerr << "Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
+    IMG_Quit();
+    SDL_Quit();
     return false;
   }
 
@@ -73,7 +86,7 @@ bool Application::init(void)
 
 void Application::quit(void)
 {
-  std::cerr << __FUNCSIG__ << std::endl;
+  std::clog << __FUNCSIG__ << std::endl;
 
   tWindowContainer::iterator it = m_windows.begin();
   tWindowContainer::iterator end_it = m_windows.end();
@@ -85,6 +98,16 @@ void Application::quit(void)
   }
 
   m_windows.clear();
+
+  // registered Windows might be doing cleanup of some
+  // SDL objects in their destructors
+  // and because Application is a global object
+  // it may happen that Window destructor code will be executed
+  // only after atexit calls these functions
+  
+  //TTF_Quit();
+  //IMG_Quit();
+  //SDL_Quit();
 
   return;
 }
@@ -126,43 +149,88 @@ void Application::run(void)
                 break;
 
               case SDL_WINDOWEVENT_CLOSE:
-                m_windows[event.window.windowID]->onClose();
-                // TODO: handle deleting the window
+                closeWindow(m_windows[event.window.windowID]);
                 break;
-                
+
+#if 0
               case SDL_WINDOWEVENT_ENTER:
               case SDL_WINDOWEVENT_FOCUS_GAINED:
                 m_focused_window = m_windows[event.window.windowID];
                 break;
+#endif
             }
           }
           break;
 
         case SDL_KEYDOWN:
-          m_focused_window->onKeyDown(event.key.keysym.sym, event.key.keysym.mod);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.key.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onKeyDown(event.key.keysym.sym, event.key.keysym.mod);
+            }
+          }
+          //m_focused_window->onKeyDown(event.key.keysym.sym, event.key.keysym.mod);
           break;
 
         case SDL_KEYUP:
-          m_focused_window->onKeyUp(event.key.keysym.sym, event.key.keysym.mod);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.key.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onKeyUp(event.key.keysym.sym, event.key.keysym.mod);
+            }
+          }
+          //m_focused_window->onKeyUp(event.key.keysym.sym, event.key.keysym.mod);
           break;
 
         case SDL_MOUSEMOTION:
-          m_focused_window->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel, event.motion.state);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.motion.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel, event.motion.state);
+            }
+          }
+          //m_focused_window->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel, event.motion.state);
           break;
 
         case SDL_MOUSEBUTTONDOWN:
-          m_focused_window->onMouseDown(event.button.button, event.button.x, event.button.y);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.button.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onMouseDown(event.button.button, event.button.x, event.button.y);
+            }
+          }
+          //m_focused_window->onMouseDown(event.button.button, event.button.x, event.button.y);
           break;
 
         case SDL_MOUSEBUTTONUP:
-          m_focused_window->onMouseUp(event.button.button, event.button.x, event.button.y);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.button.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onMouseUp(event.button.button, event.button.x, event.button.y);
+            }
+          }
+          //m_focused_window->onMouseUp(event.button.button, event.button.x, event.button.y);
           break;
 
         case SDL_MOUSEWHEEL:
-          m_focused_window->onMouseWheel(event.wheel.x, event.wheel.y);
+          {
+            tWindowContainer::iterator it = m_windows.find(event.wheel.windowID);
+            if (it != m_windows.end())
+            {
+              it->second->onMouseWheel(event.wheel.x, event.wheel.y);
+            }
+          }
+          //m_focused_window->onMouseWheel(event.wheel.x, event.wheel.y);
           break;
 
         case SDL_QUIT:
+          std::clog << "SDL_QUIT" << std::endl;
+          quit();
           running = false;
           return;  // End main loop
 
@@ -177,10 +245,11 @@ void Application::run(void)
       Window *wnd = it.second;
       if (wnd->isVisible())
       { // draw the window only if it is active
-        std::cerr << "Redrawing window " << wnd->getID() << std::endl;
+        //std::cerr << "Redrawing window " << wnd->getID() << std::endl;
         SDL_GL_MakeCurrent(wnd->getSDLWindow(), wnd->getGLContext());
         wnd->onRedraw();
-        SDL_GL_SwapWindow(wnd->getSDLWindow());
+        wnd->refresh();
+        //SDL_GL_SwapWindow(wnd->getSDLWindow());
       }
     }
   }

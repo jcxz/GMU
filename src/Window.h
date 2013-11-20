@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <iostream>
 
+
 class Window
 {
   public:
@@ -13,7 +14,8 @@ class Window
            unsigned color = 24, unsigned depth = 16, unsigned stencil = 0,
            bool enable_gl_debug = false)
       : m_sdl_wnd(nullptr),
-        m_gl_ctx(nullptr)
+        m_gl_ctx(nullptr),
+        m_sdl_ren(nullptr)
     {
       if (!init(window_title,
                 width, height,
@@ -41,13 +43,22 @@ class Window
       uint32_t flags = SDL_GetWindowFlags(m_sdl_wnd);
       return (flags & SDL_WINDOW_SHOWN) && (!(flags & SDL_WINDOW_MINIMIZED));
     }
-  
-  protected:
+    
     SDL_Window *getSDLWindow(void) const
     {
       return m_sdl_wnd;
     }
 
+    // flips the rendering buffer and displayes rendered content
+    void refresh(void)
+    {
+      //SDL_GL_SwapWindow(m_sdl_wnd);
+      SDL_RenderPresent(m_sdl_ren);
+    }
+
+    void displaySurface(int x, int y, SDL_Surface *surf);
+
+  protected:
     SDL_GLContext getGLContext(void) const
     {
       return m_gl_ctx;
@@ -83,7 +94,7 @@ class Window
     Window(const Window & );
     Window & operator=(const Window & );
 
-    friend class Application;  // give the application class access to protected functions
+    friend class Application;   // give the application class access to protected functions
 
   private:
     bool init(const char *window_title,
@@ -92,8 +103,9 @@ class Window
               bool enable_gl_debug = false);
 
   private:
-    SDL_Window *m_sdl_wnd;   /// SDL window structure
-    SDL_GLContext m_gl_ctx;  /// OpenGL context
+    SDL_Window *m_sdl_wnd;    /// SDL window structure
+    SDL_GLContext m_gl_ctx;   /// OpenGL context
+    SDL_Renderer *m_sdl_ren;  /// SDL rendering context
 };
 
 #endif

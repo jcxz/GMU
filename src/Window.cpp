@@ -1,13 +1,26 @@
 #include "Window.h"
+#include "debug.h"
 
 #include <GL/glew.h>
 #include <iostream>
+#include <cassert>
 
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper functions
 
+/**
+ * ARB Debug message callback
+ *
+ * @param source The source that produced the message.
+ * @param type The type of message.
+ * @param id message id
+ * @param severity severity of the message
+ * @param length of the message
+ * @param message the debugging message itself
+ * @param userParam the error stream to be used
+ */
 static void __stdcall DebugCallbackARB(GLenum source, GLenum type, GLuint id,
                                        GLenum severity,
                                        GLsizei length, const GLchar *message,
@@ -15,28 +28,29 @@ static void __stdcall DebugCallbackARB(GLenum source, GLenum type, GLuint id,
 {
   (void) length;
   
-  //FILE *outFile = (FILE *) userParam;
-  //char finalMessage[256];
-  //FormatDebugOutputARB(finalMessage, 256, source, type, id, severity, message);
-  //fprintf(outFile, "DebugCallbackARB:\n%s\n", finalMessage);
-  printf("DebugCallbackARB\n");
+  FILE *out_file = (FILE *) userParam;
+  char final_msg[256];
+  
+  debug::formatDebugOutputARB(source, type, id, severity, message, final_msg, 256);
+  fprintf(out_file, "%s\n", final_msg);
+  //printf("DebugCallbackARB\n");
   
   return;
 }
 
 
-static void __stdcall DebugCallbackAMD(GLuint id,
-                                       GLenum category, GLenum severity,
+static void __stdcall DebugCallbackAMD(GLuint id, GLenum category, GLenum severity,
                                        GLsizei length, const GLchar *message,
                                        GLvoid *userParam)
 {
   (void) length;
 
-  //FILE *outFile = (FILE *) userParam;
-  //char finalMsg[256];
-  //FormatDebugOutputAMD(finalMsg, 256, category, id, severity, message);
-  //fprintf(outFile, "DebugCallbackAMD:\n%s\n", finalMsg);    
-  printf("DebugCallbackAMD\n");
+  FILE *out_file = (FILE *) userParam;
+  char final_msg[256];
+
+  debug::formatDebugOutputAMD(id, category, severity, message, final_msg, 256);
+  fprintf(out_file, "DebugCallbackAMD:\n%s\n", final_msg);    
+  //printf("DebugCallbackAMD\n");
 
   return;
 }
@@ -48,10 +62,35 @@ static void __stdcall DebugCallbackAMD(GLuint id,
 
 Window::~Window(void)
 {
-  std::cerr << "Window: " << getID() << ": " << __FUNCTION__ << std::endl;
+  std::clog << "Window: " << getID() << ": " << __FUNCTION__ << std::endl;
+  //std::clog << "SDL_WasInit(): " << SDL_WasInit(0) << std::endl;
 
+  SDL_DestroyRenderer(m_sdl_ren);
   SDL_GL_DeleteContext(m_gl_ctx);
   SDL_DestroyWindow(m_sdl_wnd);
+}
+
+
+void Window::displaySurface(int x, int y, SDL_Surface *surf)
+{
+  assert(surf != nullptr);
+  assert(dest_pos != nullptr);
+
+  SDL_Texture *tex = SDL_CreateTextureFromSurface(m_sdl_ren, surf);
+  if (tex == nullptr)
+  {
+    std::cerr << "Failed to create texture from text surface: " << SDL_GetError() << std::endl;
+    return;
+  }
+
+  /* copy the texture to the window and refresh it */
+  SDL_Rect dest = { x, y, surf->w, surf->h };
+  SDL_RenderCopy(m_sdl_ren,  // the rendering context
+                 tex,        // the texture to be rendered
+                 NULL,       // the region on the texture (NULL for the entire texture)
+                 &dest);     // the region on the window, where the texture will be drawn
+
+  return;
 }
 
 
@@ -200,6 +239,21 @@ bool Window::init(const char *window_title,
     {
       std::cerr << "No suitable debugging extension found" << std::endl;
     }
+  }
+
+  /* Initialize an SDL renderer */
+  m_sdl_ren = SDL_CreateRenderer(m_sdl_wnd,                   // the window that the rendering context is going to be using
+                                 -1,                          // the redering driver (-1 to let SDL pick the most suitable one)
+                                 SDL_RENDERER_ACCELERATED |   // use HW accelerated rendering
+                                 SDL_RENDERER_PRESENTVSYNC);  // turn on vsync
+  if (m_sdl_ren == nullptr)
+  {
+    SDL_GL_DeleteContext(m_gl_ctx);
+    m_gl_ctx = nullptr;
+    SDL_DestroyWindow(m_sdl_wnd);
+    m_sdl_wnd = nullptr;
+    std::cerr << "Failed to create SDL_Renderer: " << SDL_GetError() << std::endl;
+    return false;
   }
 
   //std::cout << "OpenGL initialization: " << ogl::errorString() << std::endl;

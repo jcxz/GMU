@@ -83,12 +83,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\Application.cpp" />
+    <ClCompile Include="..\..\..\src\debug.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
+    <ClCompile Include="..\..\..\src\MainWindow.cpp" />
+    <ClCompile Include="..\..\..\src\ogl_lib.cpp" />
+    <ClCompile Include="..\..\..\src\utils.cpp" />
     <ClCompile Include="..\..\..\src\Window.cpp" />
+    <ClCompile Include="..\..\..\src\TextRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Application.h" />
+    <ClInclude Include="..\..\..\src\debug.h" />
+    <ClInclude Include="..\..\..\src\global.h" />
+    <ClInclude Include="..\..\..\src\MainWindow.h" />
+    <ClInclude Include="..\..\..\src\ogl_lib.h" />
+    <ClInclude Include="..\..\..\src\utils.h" />
     <ClInclude Include="..\..\..\src\Window.h" />
+    <ClInclude Include="..\..\..\src\TextRenderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
