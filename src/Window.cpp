@@ -74,7 +74,6 @@ Window::~Window(void)
 void Window::displaySurface(int x, int y, SDL_Surface *surf)
 {
   assert(surf != nullptr);
-  assert(dest_pos != nullptr);
 
   SDL_Texture *tex = SDL_CreateTextureFromSurface(m_sdl_ren, surf);
   if (tex == nullptr)
@@ -90,13 +89,15 @@ void Window::displaySurface(int x, int y, SDL_Surface *surf)
                  NULL,       // the region on the texture (NULL for the entire texture)
                  &dest);     // the region on the window, where the texture will be drawn
 
+  SDL_DestroyTexture(tex);
+
   return;
 }
 
 
 void Window::onRedraw(void)
 {
-  //std::cerr << "Window: " << getID() << ": " << __FUNCSIG__ << std::endl;
+  std::cerr << "Window: " << getID() << ": " << __FUNCSIG__ << std::endl;
   return;
 }
 
@@ -122,7 +123,7 @@ void Window::onKeyUp(SDL_Keycode , uint16_t )
 }
 
 
-void Window::onMouseMove(uint8_t , int32_t , int32_t , int32_t , int32_t )
+void Window::onMouseMove(uint32_t , int32_t , int32_t , int32_t , int32_t )
 {
   std::cerr << "Window: " << getID() << ": " << __FUNCTION__ << std::endl;
   return;
@@ -255,6 +256,8 @@ bool Window::init(const char *window_title,
     std::cerr << "Failed to create SDL_Renderer: " << SDL_GetError() << std::endl;
     return false;
   }
+
+  std::cerr << "Successfully created Window with OpenGL " << (enable_gl_debug ? "debugging context" : "context") << std::endl;
 
   //std::cout << "OpenGL initialization: " << ogl::errorString() << std::endl;
 

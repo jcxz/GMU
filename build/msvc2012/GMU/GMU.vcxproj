@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;$(ProjectDir)\..\..\..\src;$(ProjectDir)\..\..\..\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;$(ProjectDir)\..\..\..\src;$(ProjectDir)\..\..\..\test;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -84,22 +84,31 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\Application.cpp" />
     <ClCompile Include="..\..\..\src\debug.cpp" />
+    <ClCompile Include="..\..\..\src\FluidSystem.cpp" />
+    <ClCompile Include="..\..\..\src\geom.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
     <ClCompile Include="..\..\..\src\MainWindow.cpp" />
     <ClCompile Include="..\..\..\src\ogl_lib.cpp" />
     <ClCompile Include="..\..\..\src\utils.cpp" />
     <ClCompile Include="..\..\..\src\Window.cpp" />
     <ClCompile Include="..\..\..\src\TextRenderer.cpp" />
+    <ClCompile Include="..\..\..\tests\test_OGLWindow.cpp" />
+    <ClCompile Include="..\..\..\tests\test_TextRendererWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Application.h" />
     <ClInclude Include="..\..\..\src\debug.h" />
+    <ClInclude Include="..\..\..\src\FluidSystem.h" />
+    <ClInclude Include="..\..\..\src\geom.h" />
     <ClInclude Include="..\..\..\src\global.h" />
     <ClInclude Include="..\..\..\src\MainWindow.h" />
     <ClInclude Include="..\..\..\src\ogl_lib.h" />
+    <ClInclude Include="..\..\..\src\sdl_libs.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
     <ClInclude Include="..\..\..\src\Window.h" />
     <ClInclude Include="..\..\..\src\TextRenderer.h" />
+    <ClInclude Include="..\..\..\tests\test_OGLWindow.h" />
+    <ClInclude Include="..\..\..\tests\test_TextRendererWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,6 @@
 #include "TextRenderer.h"
 #include "Window.h"
+#include "debug.h"
 
 #include <stdexcept>
 #include <string>
@@ -44,7 +45,7 @@ bool TextRenderer::loadFonts(const char *fontfile,
                              int normal_font_size,
                              int large_font_size)
 {
-  return loadFont(fontfile, FONT_SIZE_TYPE_SMALL, small_font_size) &&
+  return loadFont(fontfile, FONT_SIZE_TYPE_SMALL, small_font_size)   &&
          loadFont(fontfile, FONT_SIZE_TYPE_NORMAL, normal_font_size) &&
          loadFont(fontfile, FONT_SIZE_TYPE_LARGE, large_font_size);
 }
@@ -55,6 +56,7 @@ SDL_Surface *TextRenderer::renderToSurface(const char *text, const SDL_Color *co
   SDL_Surface *surf = nullptr;  // free the temporary result surface
 
   TTF_Font *font = fontByType(type);
+  assert(font != nullptr);
 
   /* render the string */
   switch (m_quality)

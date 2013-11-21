@@ -5,6 +5,21 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "global.h"
+
+/** turn on memory leak debugging */
+#ifdef DEBUG_MEM_LEAKS
+#  ifdef FLUIDSIM_CC_MSVC
+#    define _CRTDBG_MAP_ALLOC
+#    include <cstdlib>
+#    include <crtdbg.h>
+#    define new new (_NORMAL_BLOCK , __FILE__ , __LINE__)
+#    define ENABLE_LEAK_DEBUG() _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF)
+#  endif
+#else
+#  define ENABLE_LEAK_DEBUG()
+#endif
+
 #include "ogl_lib.h"
 
 #include <cstdint>

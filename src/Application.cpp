@@ -189,7 +189,7 @@ void Application::run(void)
             tWindowContainer::iterator it = m_windows.find(event.motion.windowID);
             if (it != m_windows.end())
             {
-              it->second->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel, event.motion.state);
+              it->second->onMouseMove(event.motion.state, event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
             }
           }
           //m_focused_window->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel, event.motion.state);

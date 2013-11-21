@@ -1,8 +1,8 @@
-#include "MainWindow.h"
+#include "test_TextRendererWindow.h"
 
 
 
-void MainWindow::onRedraw(void)
+void TextRendererWindow::onRedraw(void)
 {
   m_text_renderer.renderSmall(10, 10, "Hello, World!");
   m_text_renderer.render(10, 110, "Hello, World!");

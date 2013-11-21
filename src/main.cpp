@@ -1,13 +1,16 @@
 #include "Application.h"
 #include "MainWindow.h"
-#include "Logger.h"
+#include "test_TextRendererWindow.h"
+#include "test_OGLWindow.h"
+//#include "Logger.h"
+#include "debug.h"
 
 
 #include <fstream>
 #include <iostream>
 
 
-
+#if 0
 struct MyClass
 {
   int value;
@@ -17,7 +20,7 @@ struct MyClass
     return os << "MyClass: " << cls.value << std::endl;
   }
 };
-
+#endif
 
 int main(int /* argc */, char ** /* argv */)
 {
@@ -33,30 +36,42 @@ int main(int /* argc */, char ** /* argv */)
   logger.getStreamProxy(Logger::SEV_INFO, Logger::DEST_CONSOLE) << my_cls;
 #endif
 
-  std::ofstream ofs("log.txt");
-  if (!ofs.is_open())
+  ENABLE_LEAK_DEBUG();
+
+  try
   {
-    std::cerr << "Failed to create log file" << std::endl;
+    std::ofstream ofs("log.txt");
+    if (!ofs.is_open())
+    {
+      std::cerr << "Failed to create log file" << std::endl;
+      return 1;
+    }
+    
+    std::clog.rdbuf(ofs.rdbuf());
+    
+    Application & app = Application::instance();
+
+    if (!app.init())
+    {
+      return 1;
+    }
+    
+    //app.registerWindow(new Window("SDL Window manager", 800, 600));
+    //app.registerWindow(new Window("Hello, World", 640, 480));
+
+    //app.registerWindow(new MainWindow("Fluid Simulator", 800, 600));
+    //app.registerWindow(new TextRendererWindow("TextRendererWindow", 800, 600));
+    app.registerWindow(new OGLWindow("OGLWindow", 800, 600));
+
+    app.run();
+    
+    //app.quit();
+  }
+  catch (std::exception & e)
+  {
+    std::cerr << e.what() << std::endl;
     return 1;
   }
-
-  std::clog.rdbuf(ofs.rdbuf());
-
-  Application & app = Application::instance();
-
-  if (!app.init())
-  {
-    return 1;
-  }
-
-  //app.registerWindow(new Window("SDL Window manager", 800, 600));
-  //app.registerWindow(new Window("Hello, World", 640, 480));
-
-  app.registerWindow(new MainWindow("Fluid Simulator", 800, 600));
-
-  app.run();
-
-  //app.quit();
 
   return 0;
 }
