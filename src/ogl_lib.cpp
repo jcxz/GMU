@@ -1,7 +1,7 @@
 #include "ogl_lib.h"
+#include "sdl_libs.h"
 #include "utils.h"
 #include "debug.h"
-#include "sdl_libs.h"
 
 #include <iostream>
 #include <cstdarg>
@@ -264,7 +264,7 @@ bool ShaderProgram::attachShaderFile(GLenum type, const char *source_file, GLuin
     return false;
   }
 
-  return attachShaderFile(type, source.c_str(), shader_id);
+  return attachShader(type, source.c_str(), shader_id);
 }
 
 
@@ -297,7 +297,8 @@ bool Texture::load(GLsizei w, GLsizei h,
                    GLenum dest_format,
                    bool mipmapped)
 {
-  assert(glIsTexture(m_id));
+  //assert(glIsTexture(m_id));
+  assert(pixels != nullptr);
 
   glBindTexture(GL_TEXTURE_2D, m_id);
 
@@ -327,8 +328,45 @@ bool Texture::load(GLsizei w, GLsizei h,
 }
 
 
+bool Texture::load(SDL_Surface *surf, bool mipmapped)
+{
+  assert(surf != nullptr);
+
+  /* convert the surface to RGBA format */
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  uint32_t rmask = 0xff000000;
+  uint32_t gmask = 0x00ff0000;
+  uint32_t bmask = 0x0000ff00;
+  uint32_t amask = 0x000000ff;
+#else
+  uint32_t rmask = 0x000000ff;
+  uint32_t gmask = 0x0000ff00;
+  uint32_t bmask = 0x00ff0000;
+  uint32_t amask = 0xff000000;
+#endif
+
+  SDL_Surface *tmp = SDL_CreateRGBSurface(0, surf->w, surf->h, 32, rmask, gmask, bmask, amask);
+  if (tmp == nullptr)
+  {
+    ERROR("Failed to create temporaty surface to perform pixel format conversion.");
+    return false;
+  }
+  
+  SDL_BlitSurface(surf, NULL, tmp, NULL);
+
+  /* copy the surface to GPU */
+  bool res = load(tmp->w, tmp->h, tmp->pixels, GL_RGBA, GL_UNSIGNED_BYTE, GL_RGBA, mipmapped);
+
+  SDL_FreeSurface(tmp);
+
+  return res;
+}
+
+
 bool Texture::load(const char *tex_file, bool mipmapped)
 {
+  assert(tex_file != nullptr);
+
   SDL_Surface *surf = IMG_Load(tex_file);
   if (surf == nullptr)
   {
@@ -336,22 +374,7 @@ bool Texture::load(const char *tex_file, bool mipmapped)
     return false;
   }
 
-  // TODO: convert the SDL_PIXELFORMAT enum to OpenGL enum,
-  // so that the conversion is not necessary in most cases
-  if (surf->format->format != SDL_PIXELFORMAT_RGBA8888)
-  {
-    SDL_Surface *tmp = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_RGBA8888, 0);
-    if (tmp == nullptr)
-    {
-      ERROR("Failed to convert loaded texture to 32-bit RGBA format: " << IMG_GetError());
-      SDL_FreeSurface(tmp);
-      return false;
-    }
-    SDL_FreeSurface(surf);
-    surf = tmp;
-  }
-
-  bool res = load(surf->w, surf->h, surf->pixels, GL_RGBA, GL_UNSIGNED_BYTE, GL_RGBA, mipmapped);
+  bool res = load(surf, mipmapped);
 
   SDL_FreeSurface(surf);
 

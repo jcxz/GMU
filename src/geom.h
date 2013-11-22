@@ -23,12 +23,13 @@ struct Model
       vao(0)
   {
     glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
   }
 
   ~Model(void)
   {
-    glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
   }
 
   friend std::ostream & operator<<(std::ostream & os, const Model & geom)
@@ -68,6 +69,11 @@ bool genPrism(Model & model, float a = 2.0f, float b = 2.0f, float c = 2.0f);
 /**
  */
 bool gen2DTriangle(Model & model);
+
+/**
+ * Generates square vertices (position and texture coordinates) and loads them to GPU
+ */
+bool gen2DRectangle(Model & model, float w = 2.0f, float h = 2.0f);
 
 }
 

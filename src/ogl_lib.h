@@ -13,6 +13,11 @@
 #include <cassert>
 
 
+// Forward declartions
+typedef struct SDL_Surface SDL_Surface;
+
+
+// Interface definition
 namespace ogl {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -192,7 +197,7 @@ class Texture
 
     ~Texture(void)
     {
-      assert(glIsTexture(m_id));
+      //assert(glIsTexture(m_id));
       glDeleteTextures(1, &m_id);
     }
 
@@ -207,13 +212,13 @@ class Texture
 
     GLuint getID(void)
     {
-      assert(glIsTexture(m_id));
+      //assert(glIsTexture(m_id));
       return m_id;
     }
 
     void bind(void)
     {
-      assert(glIsTexture(m_id));
+      //assert(glIsTexture(m_id));
       glBindTexture(GL_TEXTURE_2D, m_id);
     }
 
@@ -223,6 +228,7 @@ class Texture
               GLenum src_type = GL_UNSIGNED_BYTE,
               GLenum dest_format = GL_RGBA,
               bool mipmapped = true);
+    bool load(SDL_Surface *surf, bool mipmapped = true);
     bool load(const char *tex_file, bool mipmapped = true);
 
   private:

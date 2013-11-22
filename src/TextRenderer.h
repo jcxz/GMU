@@ -5,6 +5,9 @@
 #ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
 
+#include "geom.h"
+#include "ogl_lib.h"
+
 #include <SDL.h>
 #include <SDL_ttf.h>
 
@@ -32,6 +35,9 @@ class TextRenderer
     static const int NORMAL_FONT_DEF_SIZE = 24;
     static const int LARGE_FONT_DEF_SIZE = 48;
 
+    static const char *m_vert_shader;
+    static const char *m_frag_shader;
+
   public:
     TextRenderer::TextRenderer(Window *target = nullptr)
       :  m_small_font(nullptr),
@@ -41,12 +47,28 @@ class TextRenderer
          m_normal_fontfile(nullptr),
          m_large_fontfile(nullptr),
          m_target_wnd(target),
-         m_quality(QUALITY_HIGH)
+         m_quality(QUALITY_HIGH),
+         m_square(),
+         m_texture(),
+         m_shader()
     {
       m_font_col.r = 0xFF;
       m_font_col.g = 0x00;
       m_font_col.b = 0x00;
       m_font_col.a = 0xFF;
+#if 1
+      if (!m_shader.build(m_vert_shader, m_frag_shader))
+      {
+        throw std::runtime_error("Failed to construct TextRenderer: failed to compile shaders");
+      }
+#else
+      //if (!m_shader.buildFiles("../../../src/OpenGL/TextRenderer.vert", "../../../src/OpenGL/TextRenderer.frag"))
+      if (!m_shader.buildFiles("TextRenderer.vert", "TextRenderer.frag"))
+      {
+        throw std::runtime_error("Failed to construct TextRenderer: failed to compile shaders");
+      }
+#endif
+      geom::gen2DRectangle(m_square);
     }
     
     TextRenderer::~TextRenderer(void)
@@ -105,23 +127,20 @@ class TextRenderer
     void render(int x, int y,
                 const char *text,
                 const SDL_Color *col = nullptr,
-                FontSizeType type = FONT_SIZE_TYPE_NORMAL,
-                Window *wnd = nullptr);
+                FontSizeType type = FONT_SIZE_TYPE_NORMAL);
 
     void renderSmall(int x, int y,
                      const char *text,
-                     const SDL_Color *col = nullptr,
-                     Window *wnd = nullptr)
+                     const SDL_Color *col = nullptr)
     {
-      return render(x, y, text, col, FONT_SIZE_TYPE_SMALL, wnd);
+      return render(x, y, text, col, FONT_SIZE_TYPE_SMALL);
     }
     
     void renderLarge(int x, int y,
                      const char *text,
-                     const SDL_Color *col = nullptr,
-                     Window *wnd = nullptr)
+                     const SDL_Color *col = nullptr)
     {
-      return render(x, y, text, col, FONT_SIZE_TYPE_LARGE, wnd);
+      return render(x, y, text, col, FONT_SIZE_TYPE_LARGE);
     }
 
   private:
@@ -153,6 +172,9 @@ class TextRenderer
     Window *m_target_wnd;           /// the target window
     Quality m_quality;              /// font rendering quality
     SDL_Color m_font_col;           /// font color (used for all font sizes)
+    geom::Model m_square;           /// square geometry to place the texture
+    ogl::Texture m_texture;         /// texture to hold the rendered text
+    ogl::ShaderProgram m_shader;    /// shader program
 };
 
 #endif

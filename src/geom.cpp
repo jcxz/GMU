@@ -5,15 +5,25 @@
 #include <cassert>
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Convention for attribute positions in shaders:
+//
+// 0 ... position data
+// 1 ... normal data
+// 2 ... color data
+// 3 ... texture coordinates
+
+
+
 // Helper functions
 namespace {
 
-void *allocVBO(GLuint *vbo, unsigned int vertex_count, unsigned int vertex_size)
+void *allocVBO(GLuint vbo, unsigned int vertex_count, unsigned int vertex_size)
 {
-  assert(vbo != nullptr);
+  //assert(glIsBuffer(vbo));
 
-  glGenBuffers(1, vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, vertex_count * vertex_size, nullptr, GL_STATIC_DRAW);
 
   return glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -37,8 +47,8 @@ bool genSphere(Model & model, float r)
 
   static const int VERTEX_SIZE = 2 * 3 * sizeof(float);
 
-  assert(model.vao);  // vertex array object should be already generated
-                      // at this point (it gets generated in the constructor of GLMesh class)
+  assert(glIsVertexArray(model.vao));  // vertex array object should be already generated
+                                       // at this point (it gets generated in the constructor of GLMesh class)
 
   /* bind the vertex array object, which will be used
      to tell OpenGL about the format of generated data */
@@ -47,7 +57,6 @@ bool genSphere(Model & model, float r)
   /* set up mesh parameters */
   model.mode = GL_TRIANGLE_STRIP;
   model.count = ((tilt_end - tilt_start) / tilt_step + 1) * ((ang_end - ang_start) / ang_step + 1) * 2; // * 2 because there are two vertices generated each iteration //19 * 13 * 2;
-  model.vbo = (GLuint) 0;
 
   DBG("((tilt_end - tilt_start + 1) / tilt_step) : " << ((tilt_end - tilt_start) / tilt_step + 1));
   DBG("((ang_end - ang_start + 1) / ang_step)    : " << ((ang_end - ang_start) / ang_step + 1));
@@ -69,12 +78,10 @@ bool genSphere(Model & model, float r)
 #endif
 
   /* create buffers on GPU */
-  float *data = (float *) allocVBO(&model.vbo, model.count, VERTEX_SIZE);
+  float *data = (float *) allocVBO(model.vbo, model.count, VERTEX_SIZE);
   if (data == nullptr)
   {
     ERROR("Failed to allocate buffer for sphere model: " << ogl::errorString());
-    glDeleteBuffers(1, &model.vbo);
-    model.vbo = (GLuint) 0;
     return false;
   }
 
@@ -178,10 +185,9 @@ bool genPrism(Model & model, float a, float b, float c)
 
   model.mode = GL_TRIANGLES;
   model.count = sizeof(vertices) / sizeof(*vertices);
-  model.vbo = (GLuint) 0;
 
-  assert(model.vao);  // vertex array object should be already generated
-                      // at this point (it gets generated in the constructor of GLMesh class)
+  assert(glIsVertexArray(model.vao));  // vertex array object should be already generated
+                                       // at this point (it gets generated in the constructor of GLMesh class)
 
   /* bind the vertex array object, which will be used
      to tell OpenGL about the format of generated data */
@@ -195,12 +201,10 @@ bool genPrism(Model & model, float a, float b, float c)
 #endif
 
   /* create buffers on GPU */
-  float *data = (float *) allocVBO(&model.vbo, model.count, sizeof(*vertices));
+  float *data = (float *) allocVBO(model.vbo, model.count, sizeof(*vertices));
   if (data == nullptr)
   {
     ERROR("Failed to allocate buffer for sphere mesh: " << ogl::errorString());
-    glDeleteBuffers(1, &model.vbo);
-    model.vbo = (GLuint) 0;
     return false;
   }
 
@@ -209,7 +213,7 @@ bool genPrism(Model & model, float a, float b, float c)
   float b_side = b / 2.0f;
   float c_side = c / 2.0f;
 
-  for (unsigned int i = 0; i < model.count; ++i)
+  for (int i = 0; i < model.count; ++i)
   {
     *data++ = vertices[i][0] * a_side;
     *data++ = vertices[i][1] * b_side;
@@ -233,10 +237,10 @@ bool genPrism(Model & model, float a, float b, float c)
 
 bool gen2DTriangle(Model & model)
 {
-  static const float vertices[][3] = {
-    { 0.0f, 0.0f, -1.0 },
-    { 1.0f, 0.0f, -1.0 },
-    { 1.0f, 1.0f, -1.0 }
+  float vertices[][2] = {
+    { -1.0f, -1.0f },
+    {  1.0f, -1.0f },
+    {  1.0f,  1.0f },
   };
 
   /* bind the vertex array object, which will be used
@@ -245,16 +249,52 @@ bool gen2DTriangle(Model & model)
 
   model.mode = GL_TRIANGLES;
   model.count = sizeof(vertices) / sizeof(*vertices);
-  model.vbo = (GLuint) 0;
 
   /* create a vertex buffer */
-  glGenBuffers(1, &model.vbo);
   glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   /* tell OpenGL about the format of vertices */
   glEnableVertexAttribArray(0);  // position 0 will allways be vertex position in our shaders
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *) (0));
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *) (0));
+
+  /* unbind the vertex buffer */
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  return true;
+}
+
+
+bool gen2DRectangle(Model & model, float w, float h)
+{
+  float w2 = w / 2.0f;
+  float h2 = h / 2.0f;
+  float vertices[][2][2] = {
+    //  position  ,   texture coordinates
+    { { -w2, -h2 }, { 0.0f, 1.0f } },
+    { {  w2, -h2 }, { 1.0f, 1.0f } },
+    { {  w2,  h2 }, { 1.0f, 0.0f } },
+    { { -w2,  h2 }, { 0.0f, 0.0f } }
+  };
+
+  /* bind the vertex array object, which will be used
+     to tell OpenGL about the format of generated data */
+  glBindVertexArray(model.vao);
+
+  model.mode = GL_TRIANGLE_FAN;
+  model.count = sizeof(vertices) / sizeof(*vertices);
+
+  /* create a vertex buffer */
+  glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  /* tell OpenGL about the format of vertices */
+  glEnableVertexAttribArray(0);  // position 0 will allways be vertex position in our shaders
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *) (0));
+
+  glEnableVertexAttribArray(3);  // position 3 will allways be the texture coordinates in our shaders
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *) (2 * sizeof(float)));
 
   /* unbind the vertex buffer */
   glBindVertexArray(0);

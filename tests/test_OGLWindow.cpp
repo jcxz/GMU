@@ -39,9 +39,8 @@ const char * const OGLWindow::frag_shader =
 
 void OGLWindow::onRedraw(void)
 {
-#if 1
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+#if 1
   glm::mat4 mvp = glm::rotate(
                      glm::rotate(
                           glm::translate(
@@ -71,9 +70,22 @@ void OGLWindow::onRedraw(void)
   glUseProgram(0);
 #endif
 
-  m_text_renderer.renderSmall(10, 10, "Hello, World!");
-  m_text_renderer.render(10, 110, "Hello, World!");
-  m_text_renderer.renderLarge(10, 210, "Hello, World!");
+  m_text_renderer.setQuality(m_text_quality);
+
+  {
+    SDL_Color col = { 0xFF, 0xFF, 0xFF, 0xFF };
+    m_text_renderer.renderSmall(10, 10, "Hello, World!", &col);
+  }
+  
+  {
+    SDL_Color col = { 0xFF, 0x00, 0x00, 0xFF };
+    m_text_renderer.render(10, 110, "Hello, World!", &col);
+  }
+
+  {
+    SDL_Color col = { 0x00, 0xFF, 0x00, 0xFF };
+    m_text_renderer.renderLarge(10, 210, "Hello, World!", &col);
+  }
 
   return;
 }
@@ -105,11 +117,42 @@ void OGLWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
       std::cerr << "m_sphere" << std::endl;
       m_cur_model = &m_sphere;
     }
-    else
+    else if (m_cur_model == &m_square)
     {
-      std::cerr << "m_triangle" << std::endl;
+      std::cerr << "m_trianle" << std::endl;
       m_cur_model = &m_triangle;
     }
+    else
+    {
+      std::cerr << "m_square" << std::endl;
+      m_cur_model = &m_square;
+    }
+  }
+  else if (key == SDLK_q)
+  {
+    if (m_text_quality == TextRenderer::QUALITY_HIGH)
+    {
+      m_text_quality = TextRenderer::QUALITY_NORMAL;
+      std::cerr << "TextRenderer::QUALITY_NORMAL" << std::endl;
+    }
+    else if (m_text_quality == TextRenderer::QUALITY_NORMAL)
+    {
+      m_text_quality = TextRenderer::QUALITY_LOW;
+      std::cerr << "TextRenderer::QUALITY_LOW" << std::endl;
+    }
+    else
+    {
+      m_text_quality = TextRenderer::QUALITY_HIGH;
+      std::cerr << "TextRenderer::QUALITY_HIGH" << std::endl;
+    }
+  }
+  else if (key == SDLK_w)
+  {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  }
+  else if (key == SDLK_n)
+  {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
 
   return;
