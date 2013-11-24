@@ -1,6 +1,8 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include "debug.h"
+
 #include <SDL.h>
 #include <stdexcept>
 #include <iostream>
@@ -17,12 +19,26 @@ class Window
         m_gl_ctx(nullptr),
         m_sdl_ren(nullptr)
     {
+      /* initialize the window */
       if (!init(window_title,
                 width, height,
                 color, depth, stencil,
                 enable_gl_debug))
       {
         throw std::runtime_error("Failed to construct Window");
+      }
+
+      /* let the derived class handle window resizing */
+      SDL_Event event;
+      event.type = SDL_WINDOWEVENT;
+      event.window.type = SDL_WINDOWEVENT;
+      event.window.timestamp = 0;
+      event.window.windowID = SDL_GetWindowID(m_sdl_wnd);
+      event.window.event = SDL_WINDOWEVENT_RESIZED;
+      getSize(&event.window.data1, &event.window.data2);
+      if (SDL_PushEvent(&event) < 0)
+      {
+        WARN("Window: Failed to send resize event");
       }
     }
 

@@ -12,7 +12,7 @@ void MainWindow::onRedraw(void)
   glm::mat4 mvp = glm::rotate(
                      glm::rotate(
                           glm::translate(
-                               glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 100.0f),
+                               glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 1000.0f),
                                glm::vec3(0.0f, 0.0f, m_z_dist)
                           ),
                         m_x_angle,

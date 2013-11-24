@@ -3,9 +3,8 @@
 #include "debug.h"
 #include "utils.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <ctime>
 
 
 
@@ -176,7 +175,16 @@ bool FluidSystem::reset(unsigned int part_num)
   cl_int err = m_part_pos_kernel.setArg(0, sizeof(mem), &mem);
   if (err != CL_SUCCESS)
   {
-    ERROR("Failed to set OpenCL kernel argument");
+    ERROR("Failed to set particle buffer as an OpenCL kernel argument: " << ocl::errorToStr(err));
+    return false;
+  }
+
+  /* set the random number generator seed */
+  cl_ulong seed = time(nullptr);
+  err = m_part_pos_kernel.setArg(1, sizeof(seed), &seed);
+  if (err != CL_SUCCESS)
+  {
+    ERROR("Failed to set seed value as an OpenCL kernel argument: " << ocl::errorToStr(err));
     return false;
   }
 
@@ -225,22 +233,9 @@ void FluidSystem::update(void)
 }
 
 
-void FluidSystem::render(const glm::mat4 & m)
+void FluidSystem::render(const glm::mat4 & mvp)
 {
   glEnable(GL_DEPTH_TEST);
-
-  glm::mat4 mvp = glm::rotate(
-                     glm::rotate(
-                          glm::translate(
-                               glm::perspective(45.0f, float(800) / float(600), 0.1f, 100.0f),
-                               glm::vec3(0.0f, 0.0f, -50.0f)
-                          ),
-                        45.0f,
-                        glm::vec3(1.0f, 0.0f, 0.0f)
-                     ),
-                     45.0f,
-                     glm::vec3(0.0f, 1.0f, 0.0f)
-                  );
 
   m_shader.use();
 

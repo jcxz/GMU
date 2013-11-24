@@ -158,6 +158,7 @@ void TextRenderer::render(int x, int y,
   SDL_FreeSurface(surf);
 
   glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   /* render the text texture */
   m_shader.use();

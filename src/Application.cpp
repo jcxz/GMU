@@ -120,8 +120,13 @@ void Application::run(void)
   SDL_Event event;
   bool running = true;
 
+  static const uint32_t FPS = 25;
+  int32_t frame_time = 1000 / FPS;   // the time that is reserved for each frame (in miliseconds)
+
   while (running)
   {
+    int32_t frame_start = SDL_GetTicks();
+
     while (SDL_PollEvent(&event))
     {
       switch (event.type)
@@ -251,6 +256,17 @@ void Application::run(void)
         wnd->refresh();
         //SDL_GL_SwapWindow(wnd->getSDLWindow());
       }
+    }
+
+    // manage remaining time
+    int32_t frame_delay = SDL_GetTicks() - frame_start;
+    int32_t sleep_time = frame_time - frame_delay;
+    std::cerr << "sleep_time  : " << sleep_time  << std::endl;
+    std::cerr << "frame_start : " << frame_start << std::endl;
+    std::cerr << "frame_delay : " << frame_delay << std::endl;
+    if (sleep_time > 0)
+    {
+      SDL_Delay(sleep_time);
     }
   }
 

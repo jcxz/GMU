@@ -32,7 +32,7 @@ class MainWindow : public Window
       m_text_renderer.setColor(0x80, 0x00, 0x10);
 
       /* prepare fluid simulator */
-      if (!m_fluid_system.reset(5))
+      if (!m_fluid_system.reset(20025))
       {
         throw std::runtime_error("MainWindow: failed to prepare fluid simulator");
       }
