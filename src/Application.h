@@ -13,12 +13,12 @@ class Application
     // returns singleton instance
     static Application & instance(void);
 
-    void setAssetsDir(const char *assets_dir)
+    void setAssetsRootDir(const char *assets_dir)
     {
       m_assets_dir = assets_dir;
     }
 
-    const char *getAssetsDir(void) const
+    const char *getAssetsRootDir(void) const
     {
       return m_assets_dir;
     }
@@ -43,7 +43,7 @@ class Application
     Application(void)
       : //m_focused_window(nullptr),
         m_windows(),
-        m_assets_dir(nullptr)
+        m_assets_dir("")
     {
     }
 
@@ -64,7 +64,7 @@ class Application
     typedef std::unordered_map<uint32_t, Window *> tWindowContainer;
 
   private:
-    const char *m_assets_dir;    /// a path to directory containing assets
+    const char *m_assets_dir;    /// a path to directory containing assets (GL/CL sources, fonts, ...)
     //Window *m_focused_window;    /// the currently active window (this could in theory be infered from SDL event)
     tWindowContainer m_windows;  /// a list of application windows
 };

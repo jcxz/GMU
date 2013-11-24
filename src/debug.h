@@ -20,8 +20,6 @@
 #  define ENABLE_LEAK_DEBUG()
 #endif
 
-#include "ogl_lib.h"
-
 #include <cstdint>
 #include <iostream>
 
@@ -48,6 +46,9 @@
 /** Error messages */
 #define ERROR(x) std::cerr << x << std::endl
 
+/** Info messages */
+#define INFO(x) std::cerr << x << std::endl
+
 
 namespace debug {
 
@@ -69,26 +70,6 @@ std::ostream & hexdump(std::ostream & os,
                        const void *data,
                        uint32_t len,
                        uint32_t line_width = 16);
-
-/**
- * Function to pretty format the message from ARB debug callback
- *
- * @param source The source that produced the message.
- * @param type The type of message.
- * @param id message id
- * @param severity severity of the message
- * @param msg the message from debug callback
- * @param out_str the output string
- * @param out_str_size the maximum size of the output string
- */
-void formatDebugOutputARB(GLenum source, GLenum type,
-                          GLuint id, GLenum severity,
-                          const char *msg,
-                          char *out_str, size_t out_str_size);
-
-void formatDebugOutputAMD(GLuint id, GLenum category, GLenum severity,
-                          const char *msg,
-                          char *out_str, size_t out_str_size);
 
 } // End of namespace Debug
 

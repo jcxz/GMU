@@ -33,6 +33,116 @@ const char *errorToStr(GLenum err)
   return "UNKNOWN_GL_ERROR";
 }
 
+
+void formatDebugOutputARB(GLenum source, GLenum type,
+                          GLuint id, GLenum severity,
+                          const char *msg,
+                          char *out_str, size_t out_str_size)
+{ 
+#ifdef FLUIDSIM_CC_MSVC
+#  define snprintf _snprintf
+#endif
+
+  char source_str[32];
+  const char *source_fmt = "UNDEFINED(0x%04X)";
+
+  switch (source)
+  {
+    case GL_DEBUG_SOURCE_API_ARB:             source_fmt = "API";             break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:   source_fmt = "WINDOW_SYSTEM";   break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB: source_fmt = "SHADER_COMPILER"; break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:     source_fmt = "THIRD_PARTY";     break;
+    case GL_DEBUG_SOURCE_APPLICATION_ARB:     source_fmt = "APPLICATION";     break;
+    case GL_DEBUG_SOURCE_OTHER_ARB:           source_fmt = "OTHER";           break;
+  }
+
+  snprintf(source_str, 32, source_fmt, source);
+ 
+  char type_str[32];
+  const char *type_fmt = "UNDEFINED(0x%04X)";
+
+  switch (type)
+  {
+    case GL_DEBUG_TYPE_ERROR_ARB:               type_fmt = "ERROR";               break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: type_fmt = "DEPRECATED_BEHAVIOR"; break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:  type_fmt = "UNDEFINED_BEHAVIOR";  break;
+    case GL_DEBUG_TYPE_PORTABILITY_ARB:         type_fmt = "PORTABILITY";         break;
+    case GL_DEBUG_TYPE_PERFORMANCE_ARB:         type_fmt = "PERFORMANCE";         break;
+    case GL_DEBUG_TYPE_OTHER_ARB:               type_fmt = "OTHER";               break;
+  }
+  
+  snprintf(type_str, 32, type_fmt, type);
+  
+  char severity_str[32];
+  const char *severity_fmt = "UNDEFINED";
+  
+  switch (severity)
+  {
+    case GL_DEBUG_SEVERITY_HIGH_ARB:   severity_fmt = "HIGH";   break;
+    case GL_DEBUG_SEVERITY_MEDIUM_ARB: severity_fmt = "MEDIUM"; break;
+    case GL_DEBUG_SEVERITY_LOW_ARB:    severity_fmt = "LOW";    break;
+  }
+
+  snprintf(severity_str, 32, severity_fmt, severity);
+ 
+  snprintf(out_str, out_str_size, "OpenGL: %s [source=%s type=%s severity=%s id=%d]",
+           msg, source_str, type_str, severity_str, id);
+
+#ifdef FLUIDSIM_CC_MSVC
+#  undef snprintf
+#endif
+
+  return;
+}
+
+
+void formatDebugOutputAMD(GLuint id, GLenum category, GLenum severity,
+                          const char *msg,
+                          char *out_str, size_t out_str_size)
+{
+#ifdef FLUIDSIM_CC_MSVC
+#  define snprintf _snprintf
+#endif
+
+  char category_str[32];
+  const char *category_fmt = "UNDEFINED(0x%04X)";
+  
+  switch (category)
+  {
+    case GL_DEBUG_CATEGORY_API_ERROR_AMD:          category_fmt = "API_ERROR";          break;
+    case GL_DEBUG_CATEGORY_WINDOW_SYSTEM_AMD:      category_fmt = "WINDOW_SYSTEM";      break;
+    case GL_DEBUG_CATEGORY_DEPRECATION_AMD:        category_fmt = "DEPRECATION";        break;
+    case GL_DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD: category_fmt = "UNDEFINED_BEHAVIOR"; break;
+    case GL_DEBUG_CATEGORY_PERFORMANCE_AMD:        category_fmt = "PERFORMANCE";        break;
+    case GL_DEBUG_CATEGORY_SHADER_COMPILER_AMD:    category_fmt = "SHADER_COMPILER";    break;
+    case GL_DEBUG_CATEGORY_APPLICATION_AMD:        category_fmt = "APPLICATION";        break;
+    case GL_DEBUG_CATEGORY_OTHER_AMD:              category_fmt = "OTHER";              break;
+  }
+  
+  snprintf(category_str, 32, category_fmt, category);
+
+  char severity_str[32];
+  const char *severity_fmt = "UNDEFINED";
+  
+  switch (severity)
+  {
+    case GL_DEBUG_SEVERITY_HIGH_AMD:   severity_fmt = "HIGH";   break;
+    case GL_DEBUG_SEVERITY_MEDIUM_AMD: severity_fmt = "MEDIUM"; break;
+    case GL_DEBUG_SEVERITY_LOW_AMD:    severity_fmt = "LOW";    break;
+  }
+  
+  snprintf(severity_str, 32, severity_fmt, severity);
+
+  snprintf(out_str, out_str_size, "OpenGL: %s [category=%s severity=%s id=%d]",
+           msg, category_str, severity_str, id);
+
+#ifdef FLUIDSIM_CC_MSVC
+#  undef snprintf
+#endif 
+
+  return;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Shader management
 

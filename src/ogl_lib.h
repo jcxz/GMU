@@ -46,6 +46,26 @@ struct Exception : std::runtime_error
   }
 };
 
+/**
+ * Function to pretty format the message from ARB debug callback
+ *
+ * @param source The source that produced the message.
+ * @param type The type of message.
+ * @param id message id
+ * @param severity severity of the message
+ * @param msg the message from debug callback
+ * @param out_str the output string
+ * @param out_str_size the maximum size of the output string
+ */
+void formatDebugOutputARB(GLenum source, GLenum type,
+                          GLuint id, GLenum severity,
+                          const char *msg,
+                          char *out_str, size_t out_str_size);
+
+void formatDebugOutputAMD(GLuint id, GLenum category, GLenum severity,
+                          const char *msg,
+                          char *out_str, size_t out_str_size);
+
 ///////////////////////////////////////////////////////////////////////////////
 // Shader management
 
@@ -100,7 +120,7 @@ class ShaderProgram
     {
       // Note: this algorithm handles self assignment too
       GLuint tmp = other.m_program;
-      other.m_program = 0;
+      other.m_program = m_program;
       m_program = tmp;
       return *this;
     }
@@ -205,7 +225,7 @@ class Texture
     {
       // just swap the two values, this handles selfassignment as well
       GLuint tmp = other.m_id;
-      other.m_id = 0;
+      other.m_id = m_id;
       m_id = tmp;
       return *this;
     }

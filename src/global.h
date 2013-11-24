@@ -12,6 +12,8 @@
 # define FLUIDSIM_OS_BSD
 #elif defined(_WIN32) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 # define FLUIDSIM_OS_WIN
+#elif defined(__APPLE__) || defined(__MACH__)
+# define FLUIDSIM_OS_MAC
 #elif defined(__linux__) || defined(linux) || defined(__linux)
 # define FLUIDSIM_OS_LINUX
 #else

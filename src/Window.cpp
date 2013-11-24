@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "debug.h"
+#include "ogl_lib.h"
 
 #include <GL/glew.h>
 #include <iostream>
@@ -31,7 +32,7 @@ static void __stdcall DebugCallbackARB(GLenum source, GLenum type, GLuint id,
   FILE *out_file = (FILE *) userParam;
   char final_msg[256];
   
-  debug::formatDebugOutputARB(source, type, id, severity, message, final_msg, 256);
+  ogl::formatDebugOutputARB(source, type, id, severity, message, final_msg, 256);
   fprintf(out_file, "%s\n", final_msg);
   //printf("DebugCallbackARB\n");
   
@@ -48,7 +49,7 @@ static void __stdcall DebugCallbackAMD(GLuint id, GLenum category, GLenum severi
   FILE *out_file = (FILE *) userParam;
   char final_msg[256];
 
-  debug::formatDebugOutputAMD(id, category, severity, message, final_msg, 256);
+  ogl::formatDebugOutputAMD(id, category, severity, message, final_msg, 256);
   fprintf(out_file, "DebugCallbackAMD:\n%s\n", final_msg);    
   //printf("DebugCallbackAMD\n");
 
@@ -68,30 +69,6 @@ Window::~Window(void)
   SDL_DestroyRenderer(m_sdl_ren);
   SDL_GL_DeleteContext(m_gl_ctx);
   SDL_DestroyWindow(m_sdl_wnd);
-}
-
-
-void Window::displaySurface(int x, int y, SDL_Surface *surf)
-{
-  assert(surf != nullptr);
-
-  SDL_Texture *tex = SDL_CreateTextureFromSurface(m_sdl_ren, surf);
-  if (tex == nullptr)
-  {
-    std::cerr << "Failed to create texture from text surface: " << SDL_GetError() << std::endl;
-    return;
-  }
-
-  /* copy the texture to the window and refresh it */
-  SDL_Rect dest = { x, y, surf->w, surf->h };
-  SDL_RenderCopy(m_sdl_ren,  // the rendering context
-                 tex,        // the texture to be rendered
-                 NULL,       // the region on the texture (NULL for the entire texture)
-                 &dest);     // the region on the window, where the texture will be drawn
-
-  SDL_DestroyTexture(tex);
-
-  return;
 }
 
 

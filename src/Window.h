@@ -61,8 +61,6 @@ class Window
       //SDL_RenderPresent(m_sdl_ren);
     }
 
-    void displaySurface(int x, int y, SDL_Surface *surf);
-
   protected:
     SDL_GLContext getGLContext(void) const
     {
