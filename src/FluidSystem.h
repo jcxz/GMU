@@ -9,12 +9,6 @@
 
 
 
-struct Particle
-{
-  glm::vec3 pos;   /// position of the particle
-};
-
-
 class FluidSystem
 {
   public:

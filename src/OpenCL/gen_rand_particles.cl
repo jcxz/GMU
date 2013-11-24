@@ -35,35 +35,47 @@ float random(ulong *seed, float min, float max)
 #endif
 
 #if 0
-__constant float3 part_positions[] = {
-  (float3) (-10.0f, -10.0f, -1.0f),
-  (float3) ( 10.0f, -10.0f, -1.0f),
-  (float3) ( 10.0f,  10.0f, -1.0f),
-  (float3) (-10.0f,  10.0f, -1.0f),
-  (float3) (  0.0f,   0.0f, -1.0f),
+__constant float4 part_positions[] = {
+  (float4) (-10.0f, -10.0f, -1.0f, 1.0f),
+  (float4) ( 10.0f, -10.0f, -1.0f, 1.0f),
+  (float4) ( 10.0f,  10.0f, -1.0f, 1.0f),
+  (float4) (-10.0f,  10.0f, -1.0f, 1.0f),
+  (float4) (  0.0f,   0.0f, -1.0f, 1.0f),
 };
 #endif
 
 
-__kernel void gen_part_positions(__global float3 *positions, ulong seed)
+__kernel void gen_part_positions(__global float4 *positions, ulong seed)
 {
-  ulong gid = get_global_id(0);
+  ulong gid0 = get_global_id(0);
+  ulong gid = gid0 << 1;
   //unsigned long seed = (gid + 1) << 16;
   
   // discard the first random number (because it is a kind of crappy)
-  srand(&seed, gid);
+  srand(&seed, gid0);
   
-  positions[gid] = (float3) (random(&seed, -100, 100),
-                             random(&seed, -100, 100),
-                             random(&seed, -30,  0));
+  // assign random position
+  positions[gid + 0] = (float4) (random(&seed, -100, 100),
+                                 random(&seed, -100, 100),
+                                 random(&seed, -30,  0),
+                                 1.0f);
+
+  // assign random color
+  positions[gid + 1] = (float4) (random(&seed, 0.1f, 1.0f),
+                                 random(&seed, 0.1f, 1.0f),
+                                 random(&seed, 0.1f, 1.0f),
+                                 1.0f);
   
-#if 0
-  printf("KERNEL: positions[%lu] = [%f, %f, %f]\n",
+  //positions[gid + 0] = part_positions[get_global_id(0)]; 
+  //positions[gid + 1] = (float4) (1.0f, 1.0f, 1.0f, 1.0f);
+
+#if 0  
+  printf("KERNEL: positions[%lu] = [%v4f], [%v4f]\n",
          gid,
-         positions[gid].s0,
-         positions[gid].s1,
-         positions[gid].s2);
-#endif                                                      
+         positions[gid + 0],
+         positions[gid + 1]);
+#endif
+                                                    
   
   //positions[gid] = (float3) (rand(&seed), rand(&seed), -(rand(&seed)));
   //positions[gid] = (float3) (0.0f, 0.0f, -1.0f);

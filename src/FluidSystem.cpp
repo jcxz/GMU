@@ -16,10 +16,17 @@ const char *FluidSystem::m_vert_shader =
   "layout(location = 0) in vec3 pos;"           // model's vertex position
   "layout(location = 1) in vec3 normal;"        // model's normal
   "layout(location = 4) in vec3 particle_pos;"  // particle's position
+  "layout(location = 5) in vec4 particle_col;"  // particle's color
+  ""
+  ""
+  "out vec3 o_normal;"
+  "out vec4 o_particle_col;"
   ""
   "void main(void)"
   "{"
   "  gl_Position = mvp * vec4(pos + particle_pos, 1.0f);"
+  "  o_normal = normal;"
+  "  o_particle_col = particle_col;"
   //"  gl_Position = 0.005 * vec4(pos + particle_pos, 1.0f);"
   //"  gl_Position = vec4((pos + particle_pos) * 0.02, 1.0f);"
   "}"
@@ -28,14 +35,38 @@ const char *FluidSystem::m_vert_shader =
 const char *FluidSystem::m_frag_shader =
   "#version 330\n"
   ""
+  "uniform vec3 light_pos;"
+  "uniform vec4 light_col_a;"
+  "uniform vec4 light_col_k;"
+  "uniform vec4 light_col_s;"
+  ""
+  "in vec3 o_normal;"
+  "in vec4 o_particle_col;"
+  ""
   "void main(void)"
   "{"
-  "  gl_FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+  //"  gl_FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+  "  float dp = dot(o_normal, light_pos);"
+  "  if (dp < 0.0f) dp = 0.0f;"
+  "  gl_FragColor = light_col_a * o_particle_col + light_col_k * o_particle_col * dp;"
   "}"
 ;
 
 
-const char *FluidSystem::m_part_pos_kernel_src = "/src/OpenCL/rand_part_positions.cl";
+const char *FluidSystem::m_part_pos_kernel_src = "/src/OpenCL/gen_rand_particles.cl";
+
+
+namespace {
+
+// Helper structure, that is only used to keep track
+// of particle elements and their respective byte sizes and offsets
+struct Particle
+{
+  cl_float4 pos;  // particle position
+  cl_float4 col;  // particle color
+};
+
+}
 
 
 
@@ -148,8 +179,20 @@ bool FluidSystem::initGL(void)
     return false;
   }
 
+  /* set lights */
+  GLuint prog = m_shader.getID();
+  
+  glUseProgram(prog);
+  //glUniform3f(glGetUniformLocation(prog, "light_pos"), 0.0f, 0.0f, -1.0f);     // shader assumes the position is normalized
+  glUniform3f(glGetUniformLocation(prog, "light_pos"), -1.0f, 1.0f, -1.0f);     // shader assumes the position is normalized
+  glUniform4f(glGetUniformLocation(prog, "light_col_a"), 0.8f, 0.8f, 0.8f, 1.0f);
+  glUniform4f(glGetUniformLocation(prog, "light_col_k"), 1.0f, 1.0f, 1.0f, 1.0f);
+  glUniform4f(glGetUniformLocation(prog, "light_col_s"), 1.0f, 1.0f, 1.0f, 1.0f);
+  glUseProgram(0);
+
   /* load models */
   if (!geom::genSphere(m_particle_geom))
+  //if (!geom::genPrism(m_particle_geom))
   {
     ERROR("Failed to generate sphere model");
     return false;
@@ -163,8 +206,10 @@ bool FluidSystem::reset(unsigned int part_num)
 {
   INFO("Initializing data");
 
+  std::cout << "sizeof(Particle): " << sizeof(Particle) << std::endl;
+
   /* allocate the buffer to hold particle positions */
-  if (!m_particle_buf.bufferData(nullptr, part_num * 3 * sizeof(float), ocl::GLBuffer::WRITE_ONLY))
+  if (!m_particle_buf.bufferData(nullptr, part_num * sizeof(Particle), ocl::GLBuffer::WRITE_ONLY))
   {
     ERROR("Failed to initialize GLBuffer");
     return false;
@@ -245,8 +290,12 @@ void FluidSystem::render(const glm::mat4 & mvp)
 
   glBindBuffer(GL_ARRAY_BUFFER, m_particle_buf.getGLID());
   glEnableVertexAttribArray(4);
-  glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+  glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void *) (offsetof(Particle, pos)));
   glVertexAttribDivisor(4, 1);
+
+  glEnableVertexAttribArray(5);
+  glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Particle), (void *) (offsetof(Particle, col)));
+  glVertexAttribDivisor(5, 1);
 
   glDrawArraysInstanced(m_particle_geom.mode, 0, m_particle_geom.count, m_num_particles);
 

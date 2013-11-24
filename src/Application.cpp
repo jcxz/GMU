@@ -261,9 +261,9 @@ void Application::run(void)
     // manage remaining time
     int32_t frame_delay = SDL_GetTicks() - frame_start;
     int32_t sleep_time = frame_time - frame_delay;
-    std::cerr << "sleep_time  : " << sleep_time  << std::endl;
-    std::cerr << "frame_start : " << frame_start << std::endl;
-    std::cerr << "frame_delay : " << frame_delay << std::endl;
+    //std::cerr << "sleep_time  : " << sleep_time  << std::endl;
+    //std::cerr << "frame_start : " << frame_start << std::endl;
+    //std::cerr << "frame_delay : " << frame_delay << std::endl;
     if (sleep_time > 0)
     {
       SDL_Delay(sleep_time);
