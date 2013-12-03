@@ -61,7 +61,7 @@ class FluidSystem : public ParticleSystem
     virtual bool reset(unsigned int part_num);
 
     // recalculate the particle system
-    virtual void update(void);
+    virtual void update(float time_step = 1.0f);
 
     // render the particle system
     // @param mv model-view matrix 

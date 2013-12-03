@@ -23,7 +23,8 @@ class ParticleSystem
       , m_cl_queue()
       , m_particle_pos_buf()
       , m_particle_col_buf()
-      , m_num_particles()
+      , m_num_particles(0)
+      , m_time(0.0f)
       , m_volume_min()
       , m_volume_max()
       , m_use_uniform_color(false)
@@ -71,7 +72,7 @@ class ParticleSystem
     virtual bool reset(unsigned int part_num) = 0;
 
     // recalculate the particle system
-    virtual void update(void) = 0;
+    virtual void update(float time_step = 1.0f) = 0;
 
     // render the particle system
     // @param mv model-view matrix 
@@ -113,8 +114,9 @@ class ParticleSystem
     ocl::GLBuffer m_particle_pos_buf;  // a buffer with particle positions (shared with OpenGL)
     ocl::GLBuffer m_particle_col_buf;  // a buffer with particle colors (shared with OpenGL)
 
-    // helper variables
+    // helper variables for simulation
     size_t m_num_particles;      // number of particles in simulation
+    cl_float m_time;             // simulation time
     cl_float4 m_volume_min;      // bounding volume minimum corner
     cl_float4 m_volume_max;      // bounding volume maximum corner
 

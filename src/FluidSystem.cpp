@@ -104,7 +104,84 @@ bool FluidSystem::reset(unsigned int part_num)
 
   /* set kernel parameters that do not change once the simulation is prepared */
   
-  /* reset kernel arguments */
+#define SIM_SCALE ((cl_float) (0.004f))
+#define SMOOTH_RADIUS ((cl_float) (0.01f))
+#define RADIUS2 ((cl_float) ((SMOOTH_RADIUS) * (SMOOTH_RADIUS)))
+#define MASS ((cl_float) (0.00020543f))
+#define POLYKERN ((cl_float) (315.0f / (64.0f * 3.141592 * pow(SMOOTH_RADIUS, 9))))
+#define RESTDENSITY ((cl_float) (600.0f))
+#define INTSTIFFNESS ((cl_float) (1.0f))
+
+#define VISCOSITY ((cl_float) (0.2f))
+#define LAPKERN ((cl_float) (45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
+#define SPIKEYKERN ((cl_float) (-45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
+
+#define SLOPE ((cl_float) (1.0f))        // ???
+#define LEFTWAVE ((cl_float) (1.5f))     // ???
+#define RIGHTWAVE ((cl_float) (-1.5f))   // ???
+#define DELTATIME ((cl_float) (0.03f))   // ???
+#define LIMIT ((cl_float) (200.0f))
+#define EXTSTIFFNESS ((cl_float) (10000.0f))
+#define EXTDAMPING ((cl_float) (256.0f))
+#define RADIUS ((cl_float) (0.004f))
+
+  /* compute pressure kernel's arguments */
+  if (!ocl::KernelArgs(m_sph_compute_pressure_kernel, "m_sph_compute_pressure_kernel")
+            .arg(m_density_buf)
+            .arg(m_pressure_buf)
+            .arg(SIM_SCALE)
+            .arg(SMOOTH_RADIUS)
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(RADIUS2)
+            .arg(MASS)
+            .arg(POLYKERN)
+            .arg(RESTDENSITY)
+            .arg(INTSTIFFNESS)
+            .arg((unsigned int) (m_num_particles)))
+  {
+    return false;
+  }
+
+  /* compute force kernel's arguments */
+  if (!ocl::KernelArgs(m_sph_compute_force_kernel, "m_sph_compute_force_kernel")
+            .arg(m_force_buf)
+            .arg(SIM_SCALE)
+            .arg(SMOOTH_RADIUS)
+            .arg(VISCOSITY)
+            .arg(LAPKERN)
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_pressure_buf)
+            .arg(m_density_buf)
+            .arg(m_velocity_buf)
+            .arg((unsigned int) (m_num_particles))
+            .arg(SPIKEYKERN))
+  {
+    return false;
+  }
+
+  /* compute step kernel's arguments */
+  if (!ocl::KernelArgs(m_sph_compute_step_kernel, "m_sph_compute_step_kernel")
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_velocity_buf)
+            .arg(m_prev_velocity_buf)
+            .arg(SLOPE)
+            .arg(LEFTWAVE)
+            .arg(RIGHTWAVE)
+            .arg(DELTATIME)
+            .arg(LIMIT)
+            .arg(m_force_buf)
+            .arg(EXTSTIFFNESS)
+            .arg(EXTDAMPING)
+            .arg(RADIUS)
+            .arg(m_volume_min)
+            .arg(m_volume_max)
+            .arg(SIM_SCALE)
+            .arg(MASS))
+  {
+    return false;
+  }
+
+  /* reset kernel's arguments */
   if (!ocl::KernelArgs(m_sph_reset_kernel, "m_sph_reset_kernel")
             .arg(m_particle_pos_buf.getCLID())
             .arg(m_velocity_buf)
@@ -143,8 +220,52 @@ bool FluidSystem::reset(unsigned int part_num)
 }
 
 
-void FluidSystem::update(void)
+void FluidSystem::update(float time_step)
 {
-  //std::cerr << __FUNCTION__ << std::endl;
+  /* set kernel arguments that change every frame */
+  cl_int err = m_sph_compute_step_kernel.setArg(16, (cl_float) (m_time));
+  if (err != CL_SUCCESS)
+  {
+    WARN("FluidSystem: Failed to set time argument: " << ocl::errorToStr(err));
+    return;
+  }
+
+  /* synchronise with OpenGL */
+  cl_command_queue queue = m_cl_queue();
+  cl_mem buffers[] = { m_particle_pos_buf.getCLID() };
+
+  ocl::GLSyncHandler sync(queue, FLUIDSIM_COUNT(buffers), buffers);
+  if (!sync) return;
+
+  /* compute pressure */
+  err = clEnqueueNDRangeKernel(queue, m_sph_compute_pressure_kernel(), 1,
+                               nullptr, &m_num_particles, nullptr,
+                               0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
+  }
+
+  /* compute force */
+  err = clEnqueueNDRangeKernel(queue, m_sph_compute_force_kernel(), 1,
+                               nullptr, &m_num_particles, nullptr,
+                               0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
+  }
+
+  /* integrate */
+  err = clEnqueueNDRangeKernel(queue, m_sph_compute_step_kernel(), 1,
+                               nullptr, &m_num_particles, nullptr,
+                               0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
+  }
+
+  /* advance simulation time */
+  m_time += time_step;   // 3.0f;
+
   return;
 }

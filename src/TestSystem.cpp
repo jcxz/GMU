@@ -64,8 +64,8 @@ bool TestSystem::reset(unsigned int part_num)
   /* initialize kernel arguments */
   if (!ocl::KernelArgs(m_test_kernel, "m_test_kernel")
             .arg(m_particle_pos_buf.getCLID())
-            .arg(m_particle_col_buf.getCLID())
-            .arg((cl_ulong) (time(nullptr))))
+            .arg(m_particle_col_buf.getCLID()))
+            //.arg((cl_ulong) (time(nullptr))))
   {
     return false;
   }
@@ -106,21 +106,30 @@ bool TestSystem::reset(unsigned int part_num)
 }
 
 
-void TestSystem::update(void)
+void TestSystem::update(float time_step)
 {
+  cl_int err = m_test_kernel.setArg(2, cl_ulong(time(nullptr) + m_time));
+  if (err != CL_SUCCESS)
+  {
+    WARN("TestSystem: Failed to set seed argument: " << ocl::errorToStr(err));
+    return;
+  }
+
   cl_command_queue queue = m_cl_queue();
   cl_mem buffers[] = { m_particle_pos_buf.getCLID(), m_particle_col_buf.getCLID() };
 
   ocl::GLSyncHandler sync(queue, FLUIDSIM_COUNT(buffers), buffers);
   if (!sync) return;
 
-  cl_int err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
-                                      nullptr, &m_num_particles, nullptr,
-                                      0, nullptr, nullptr);
+  err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
+                               nullptr, &m_num_particles, nullptr,
+                               0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
-    WARN("Failed to enqueue test simulation kernel");
+    WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
   }
+
+  m_time += time_step;   // 3.0f;
 
 #if 0
   cl_command_queue queue = m_cl_queue();
