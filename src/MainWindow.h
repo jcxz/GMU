@@ -41,6 +41,7 @@ class MainWindow : public Window
   protected:
     virtual void onRedraw(void);
     virtual void onResize(int32_t width, int32_t height);
+    virtual void onKeyDown(SDL_Keycode key, uint16_t mod);
     virtual void onMouseMove(uint32_t buttons, int32_t x, int32_t y, int32_t xrel, int32_t yrel);
 
   private:

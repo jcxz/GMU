@@ -5,6 +5,7 @@
 
 #include <CL/cl.hpp>
 #include <stdexcept>
+#include <array>
 
 
 
@@ -59,6 +60,23 @@ bool selectGLDeviceAndPlatform(cl_device_id *device, cl_platform_id *platform);
  */
 bool selectPlatformAndDevice(cl_device_id *device, cl_platform_id *platform,
                              cl_device_type dev_type = CL_DEVICE_TYPE_GPU);
+
+///////////////////////////////////////////////////////////////////////////////
+// Kernel and program management
+
+/**
+ * A function to create an OpenCL program object from an array of OpenCL
+ * program file paths.
+ *
+ * @param program_files an array of pointers to OpenCL program filenames
+ * @param num the number of file paths
+ *
+ * @return a newly created Program or a NULL program on Error
+ */
+cl_program buildProgram(const cl_context ctx,
+                        const char * const program_files[],
+                        const unsigned int num,
+                        const char *built_options = nullptr);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bufer management

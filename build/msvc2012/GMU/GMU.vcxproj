@@ -112,6 +112,17 @@
     <ClInclude Include="..\..\..\tests\test_OGLWindow.h" />
     <ClInclude Include="..\..\..\tests\test_TextRendererWindow.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\src\OpenCL\gen_rand_particles.cl" />
+    <None Include="..\..\..\src\OpenCL\sph_compute_force.cl" />
+    <None Include="..\..\..\src\OpenCL\sph_compute_pressure.cl" />
+    <None Include="..\..\..\src\OpenCL\sph_compute_step.cl" />
+    <None Include="..\..\..\src\OpenCL\sph_reset.cl" />
+    <None Include="..\..\..\src\OpenGL\FluidSystem.frag" />
+    <None Include="..\..\..\src\OpenGL\FluidSystem.vert" />
+    <None Include="..\..\..\src\OpenGL\TextRenderer.frag" />
+    <None Include="..\..\..\src\OpenGL\TextRenderer.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

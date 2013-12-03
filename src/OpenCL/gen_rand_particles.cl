@@ -45,26 +45,27 @@ __constant float4 part_positions[] = {
 #endif
 
 
-__kernel void gen_part_positions(__global float4 *positions, ulong seed)
+__kernel void gen_part_positions(__global float4 *positions, __global float4 *colors, ulong seed)
 {
-  ulong gid0 = get_global_id(0);
-  ulong gid = gid0 << 1;
+  ulong gid = get_global_id(0);
+  //ulong gid0 = get_global_id(0);
+  //ulong gid = gid0 << 1;
   //unsigned long seed = (gid + 1) << 16;
   
   // discard the first random number (because it is a kind of crappy)
-  srand(&seed, gid0);
+  srand(&seed, gid << 1);
   
   // assign random position
-  positions[gid + 0] = (float4) (random(&seed, -100, 100),
-                                 random(&seed, -100, 100),
-                                 random(&seed, -30,  0),
-                                 1.0f);
+  positions[gid] = (float4) (random(&seed, -100, 100),
+                             random(&seed, -100, 100),
+                             random(&seed, -30,  0),
+                             1.0f);
 
   // assign random color
-  positions[gid + 1] = (float4) (random(&seed, 0.1f, 1.0f),
-                                 random(&seed, 0.1f, 1.0f),
-                                 random(&seed, 0.1f, 1.0f),
-                                 1.0f);
+  colors[gid] = (float4) (random(&seed, 0.1f, 1.0f),
+                          random(&seed, 0.1f, 1.0f),
+                          random(&seed, 0.1f, 1.0f),
+                          1.0f);
   
   //positions[gid + 0] = part_positions[get_global_id(0)]; 
   //positions[gid + 1] = (float4) (1.0f, 1.0f, 1.0f, 1.0f);

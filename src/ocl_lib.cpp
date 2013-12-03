@@ -1,6 +1,7 @@
 #include "ocl_lib.h"
 #include "global.h"
 #include "debug.h"
+#include "utils.h"
 
 
 
@@ -172,7 +173,7 @@ bool selectPlatformAndDevice(cl_device_id *device, cl_platform_id *platform,
   cl_int err = cl::Platform::get(&platform_list);
   if (err != CL_SUCCESS)
   {
-    ERROR("Failed to retrieve a list of available platforms");
+    ERROR("Failed to retrieve a list of available platforms: " << errorToStr(err));
     return false;
   }
 
@@ -197,6 +198,78 @@ bool selectPlatformAndDevice(cl_device_id *device, cl_platform_id *platform,
   // no suitable device found
   return false;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Kernel and program management
+
+
+cl_program buildProgram(const cl_context ctx,
+                        const char * const program_files[],
+                        const unsigned int num,
+                        const char *built_options)
+{
+  // use alloca since MSVC lacks variable length arrays
+  // NOTE: alloca() allocates memory on stackand this memory is automatically
+  // freed whenthe function is exited
+  const char **programs = (const char **) alloca(num * sizeof(const char *));
+
+  for (unsigned int i = 0; i < num; ++i)
+  {
+    programs[i] = utils::loadFile(utils::AssetsPath(program_files[i]));
+    if (programs[i] == nullptr)
+    {
+      std::cerr << "Failed to load program file: "
+                << utils::AssetsPath(program_files[i]) << std::endl;
+      /* if loading failed delete all sofar loaded programs */
+      for (unsigned int j = 0; j < i; ++j)
+      {
+        delete [] programs[j];
+      }
+      return nullptr;
+    }
+  }
+  
+  /* construct the program object */
+  cl_int err = CL_SUCCESS;
+  cl_program program = clCreateProgramWithSource(ctx, num, programs, nullptr, &err);
+
+  /* free all the programs once the program is created */
+  for (unsigned int i = 0; i < num; ++i)
+  {
+    delete [] programs[i];
+  }
+
+  /* check if program creation succeeded */
+  if (err != CL_SUCCESS)
+  {
+    std::cerr << "Failed to create the program object: " << errorToStr(err) << std::endl;
+    return nullptr;
+  }
+
+  /* compile the program for all devices in the context */
+  err = clBuildProgram(program, 0, nullptr, built_options, nullptr, nullptr);
+
+  /* print the build information */
+  {
+    clRetainContext(ctx);       // to prevent cl::Context from releasing it
+    clRetainProgram(program);   // to prevent cl::Program from releasing it
+    std::vector<cl::Device> devices = cl::Context(ctx).getInfo<CL_CONTEXT_DEVICES>();
+    std::cerr << "Program build log: " << std::endl;
+    std::cerr << cl::Program(program).getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices.front()) << std::endl;
+  }
+
+  /* check on compilation status */
+  if (err != CL_SUCCESS)
+  {
+    ERROR("Failed to compile OpenCL program: " << ocl::errorToStr(err));
+    clReleaseProgram(program);
+    return nullptr;
+  }
+
+  return program;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bufer management

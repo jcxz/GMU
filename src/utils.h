@@ -17,6 +17,10 @@ namespace utils {
 /* Load whole file and return it as std::string */
 bool loadFile(const char * const filename, std::string *source_code);
 
+/* load the entire file and return it as a c-like string
+   Note that caller is responsible for deallocating the string */
+const char *loadFile(const char * const filename, size_t *file_size = nullptr);
+
 bool genCircleTexture(ogl::Texture & tex,
                       unsigned int w, unsigned int h,
                       unsigned char r, unsigned char g,

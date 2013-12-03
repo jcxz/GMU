@@ -9,23 +9,25 @@ void MainWindow::onRedraw(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glm::mat4 mvp = glm::rotate(
-                     glm::rotate(
-                          glm::translate(
-                               glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 1000.0f),
-                               glm::vec3(0.0f, 0.0f, m_z_dist)
-                          ),
-                        m_x_angle,
-                        glm::vec3(1.0f, 0.0f, 0.0f)
-                     ),
-                     m_y_angle,
-                     glm::vec3(0.0f, 1.0f, 0.0f)
-                  );
+  glm::mat4 mv = glm::rotate(
+                      glm::rotate(
+                           glm::translate(
+                                glm::mat4(),
+                                glm::vec3(0.0f, 0.0f, m_z_dist)
+                           ),
+                           m_x_angle,
+                           glm::vec3(1.0f, 0.0f, 0.0f)
+                      ),
+                      m_y_angle,
+                      glm::vec3(0.0f, 1.0f, 0.0f)
+                 );
+
+  glm::mat4 proj = glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 1000.0f);
 
   /* update the fluid system */
   m_fluid_system.update();
 
-  m_fluid_system.render(mvp);
+  m_fluid_system.render(mv, proj);
 
   /* display messages */
   m_text_renderer.renderSmall(10, 10, "Hello, World!");
@@ -41,6 +43,21 @@ void MainWindow::onResize(int32_t width, int32_t height)
   m_wnd_h = height;
   m_wnd_w = width;
   glViewport(0, 0, width, height);
+  return;
+}
+
+
+void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
+{
+  if (mod & KMOD_CTRL)
+  {
+    if (key == SDLK_s)
+    {
+      m_fluid_system.toggleMode();
+      std::cerr << m_fluid_system.modeName() << std::endl;
+    }
+  }
+
   return;
 }
 
