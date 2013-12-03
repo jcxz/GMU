@@ -90,6 +90,8 @@
     <ClCompile Include="..\..\..\src\MainWindow.cpp" />
     <ClCompile Include="..\..\..\src\ocl_lib.cpp" />
     <ClCompile Include="..\..\..\src\ogl_lib.cpp" />
+    <ClCompile Include="..\..\..\src\ParticleSystem.cpp" />
+    <ClCompile Include="..\..\..\src\TestSystem.cpp" />
     <ClCompile Include="..\..\..\src\utils.cpp" />
     <ClCompile Include="..\..\..\src\Window.cpp" />
     <ClCompile Include="..\..\..\src\TextRenderer.cpp" />
@@ -105,7 +107,9 @@
     <ClInclude Include="..\..\..\src\MainWindow.h" />
     <ClInclude Include="..\..\..\src\ocl_lib.h" />
     <ClInclude Include="..\..\..\src\ogl_lib.h" />
+    <ClInclude Include="..\..\..\src\ParticleSystem.h" />
     <ClInclude Include="..\..\..\src\sdl_libs.h" />
+    <ClInclude Include="..\..\..\src\TestSystem.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
     <ClInclude Include="..\..\..\src\Window.h" />
     <ClInclude Include="..\..\..\src\TextRenderer.h" />
@@ -118,8 +122,10 @@
     <None Include="..\..\..\src\OpenCL\sph_compute_pressure.cl" />
     <None Include="..\..\..\src\OpenCL\sph_compute_step.cl" />
     <None Include="..\..\..\src\OpenCL\sph_reset.cl" />
-    <None Include="..\..\..\src\OpenGL\FluidSystem.frag" />
-    <None Include="..\..\..\src\OpenGL\FluidSystem.vert" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_particle_colors.frag" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_particle_colors.vert" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_uniform_color.frag" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_uniform_color.vert" />
     <None Include="..\..\..\src\OpenGL\TextRenderer.frag" />
     <None Include="..\..\..\src\OpenGL\TextRenderer.vert" />
   </ItemGroup>

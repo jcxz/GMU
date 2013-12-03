@@ -1,3 +1,5 @@
+#pragma OPENCL EXTENSION cl_amd_printf : enable
+
 
 float random(ulong seed, float min, float max)
 {

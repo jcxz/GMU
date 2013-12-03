@@ -430,7 +430,7 @@ bool Texture::load(GLsizei w, GLsizei h,
 
   if (err != GL_NO_ERROR)
   {
-    ERROR("Failed to stora texture data on GPU: " << errorToStr(err));
+    ERROR("Failed to store texture data on GPU: " << errorToStr(err));
     return false;
   }
 

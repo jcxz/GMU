@@ -248,13 +248,14 @@ class GLBuffer
 class GLSyncHandler
 {
   public:
+#if 0
     GLSyncHandler(cl_command_queue queue, cl_mem buffer)
-      : m_queue(queue), m_num_buffers(1),
-        m_buffers(&buffer), m_err(CL_SUCCESS)
+      : m_mem(buffer), m_queue(queue), m_num_buffers(1),
+        m_buffers(&m_mem), m_err(CL_SUCCESS)
     {
       acquireGLObjects();
     }
-
+#endif
     GLSyncHandler(cl_command_queue queue, cl_uint num_buffers, const cl_mem *buffers)
       : m_queue(queue), m_num_buffers(num_buffers),
         m_buffers(buffers), m_err(CL_SUCCESS)
@@ -296,6 +297,8 @@ class GLSyncHandler
                   << errorToStr(m_err) << std::endl;
         return;
       }
+
+      return;
     }
 
   private:
@@ -304,6 +307,7 @@ class GLSyncHandler
     GLSyncHandler & operator=(const GLSyncHandler & );
 
   private:
+    //cl_mem m_mem;
     cl_command_queue m_queue;
     cl_uint m_num_buffers;
     const cl_mem *m_buffers;

@@ -150,7 +150,7 @@ void TextRenderer::render(int x, int y,
   /* convert the text to OpenGL texture */
   if (!m_texture.load(surf, false))
   {
-    WARN("Failed to converte text from SDL_Surface to OpenGl texture.");
+    WARN("Failed to convert text from SDL_Surface to OpenGL texture.");
     SDL_FreeSurface(surf);
     return;
   }

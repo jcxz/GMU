@@ -25,14 +25,27 @@ void MainWindow::onRedraw(void)
   glm::mat4 proj = glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 1000.0f);
 
   /* update the fluid system */
-  m_fluid_system.update();
+  m_cur_ps->update();
 
-  m_fluid_system.render(mv, proj);
+  m_cur_ps->render(mv, proj);
 
   /* display messages */
-  m_text_renderer.renderSmall(10, 10, "Hello, World!");
-  m_text_renderer.render(10, 110, "Hello, World!");
-  m_text_renderer.renderLarge(10, 210, "Hello, World!");
+  //m_text_renderer.renderSmall(10, 10, "Hello, World!");
+  //m_text_renderer.render(10, 110, "Hello, World!");
+  //m_text_renderer.renderLarge(10, 210, "Hello, World!");
+
+  if (m_cur_ps == m_fluid_system.get())
+  {
+    m_text_renderer.render(10, 10, "Fluid System simulator");
+  }
+  else if (m_cur_ps == m_test_system.get())
+  {
+    m_text_renderer.render(10, 10, "Test System simulator");
+  }
+  else
+  {
+    m_text_renderer.render(10, 10, "Unknown simulator");
+  }
 
   return;
 }
@@ -53,12 +66,34 @@ void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
   {
     if (key == SDLK_s)
     {
+      if (m_cur_ps == m_fluid_system.get())
+      {
+        std::cerr << "MainWindow: Switching to Fluid simulator" << std::endl;
+        m_cur_ps = m_test_system.get();
+      }
+      else if (m_cur_ps == m_test_system.get())
+      {
+        std::cerr << "MainWindow: Switching to Test simulator" << std::endl;
+        m_cur_ps = m_fluid_system.get();
+      }
+      else
+      {
+        std::cerr << "MainWindow: Unknown particle system" << std::endl;
+        return;
+      }
+
+      if (!m_cur_ps->reset(2025)) //20025))
+      {
+        std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
+      }
+#if 0
       m_fluid_system.toggleMode();
       std::cerr << m_fluid_system.modeName() << std::endl;
       if (!m_fluid_system.reset(2025)) //20025))
       {
         std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
       }
+#endif
     }
   }
 
