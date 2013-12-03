@@ -39,7 +39,10 @@ class FluidSystem
         m_force_buf(),
         m_prev_velocity_buf(),
         m_num_particles(0),
-        m_mode(SIM_MODE_TEST)
+        m_volume_min(),
+        m_volume_max(),
+        //m_mode(SIM_MODE_TEST)
+        m_mode(SIM_MODE_SPH)
     {
       // initialize OpenCL context, compile kernels
       if (!initCL())
@@ -165,6 +168,8 @@ class FluidSystem
 
     // helper variables
     size_t m_num_particles;
+    cl_float4 m_volume_min;      // bounding volume minimum corner
+    cl_float4 m_volume_max;      // bounding volume maximum corner
 
     // simulation mode
     SimulationMode m_mode;

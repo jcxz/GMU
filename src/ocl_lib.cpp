@@ -272,7 +272,7 @@ cl_program buildProgram(const cl_context ctx,
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Bufer management
+// OpenGL interoperability
 
 bool GLBuffer::bufferData(const GLvoid *data, GLsizeiptr size, AccessType at, GLenum usage)
 {

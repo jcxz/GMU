@@ -256,6 +256,16 @@ bool FluidSystem::resetTestSimulation(unsigned int part_num)
     return false;
   }
 
+  /* initialize kernel arguments */
+  if (!ocl::KernelArgs(m_test_kernel, "m_test_kernel")
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_particle_col_buf.getCLID())
+            .arg((cl_ulong) (time(nullptr))))
+  {
+    return false;
+  }
+
+#if 0
   cl_int err = CL_SUCCESS;
 
   /* set the position buffer as an argument to the kernel */
@@ -284,7 +294,7 @@ bool FluidSystem::resetTestSimulation(unsigned int part_num)
     ERROR("Failed to set seed value as an OpenCL kernel argument: " << ocl::errorToStr(err));
     return false;
   }
-
+#endif
   m_num_particles = part_num;
 
   return true;
@@ -294,27 +304,33 @@ bool FluidSystem::resetTestSimulation(unsigned int part_num)
 void FluidSystem::updateTestSimulation(void)
 {
   cl_command_queue queue = m_cl_queue();
+  cl_mem buffers[] = { m_particle_pos_buf.getCLID(), m_particle_col_buf.getCLID() };
+
+  ocl::GLSyncHandler sync(queue, FLUIDSIM_COUNT(buffers), buffers);
+  if (!sync) return;
+
+  cl_int err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
+                                      nullptr, &m_num_particles, nullptr,
+                                      0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    WARN("Failed to enqueue test simulation kernel");
+  }
+
+#if 0
+  cl_command_queue queue = m_cl_queue();
 
   /* wait for OpenGL to finish rendering */
   glFinish();
 
   cl_int err = CL_SUCCESS;
+  cl_mem buffers[] = { m_particle_pos_buf.getCLID(), m_particle_col_buf.getCLID() };
 
-  /* acquire access to the shared vertex buffer object with particle positions */
-  cl_mem pos_buf = m_particle_pos_buf.getCLID();
-  err = clEnqueueAcquireGLObjects(queue, 1, &pos_buf, 0, nullptr, nullptr);
+  /* acquire access to the shared vertex buffer object */
+  err = clEnqueueAcquireGLObjects(queue, FLUIDSIM_COUNT(buffers), buffers, 0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     ERROR("Failed to acquire an exclusive access to the OpenGL's vertex buffer object with particle positions");
-    return;
-  }
-
-  /* acquire access to the shared vertex buffer object with particle colors */
-  cl_mem col_buf = m_particle_col_buf.getCLID();
-  err = clEnqueueAcquireGLObjects(queue, 1, &col_buf, 0, nullptr, nullptr);
-  if (err != CL_SUCCESS)
-  {
-    ERROR("Failed to acquire an exclusive access to the OpenGL's vertex buffer object with particle colors");
     return;
   }
 
@@ -327,22 +343,16 @@ void FluidSystem::updateTestSimulation(void)
     WARN("Failed to release an exclusive access to the OpenGL's vertex buffer object");
   }
 
-  /* unlock the vertex buffer object with colors, so that OpenGL can continue using it */
-  err = clEnqueueReleaseGLObjects(queue, 1, &col_buf, 0, nullptr, nullptr);
+  /* unlock the vertex buffer object, so that OpenGL can continue using it */
+  err = clEnqueueReleaseGLObjects(queue, FLUIDSIM_COUNT(buffers), buffers, 0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to release an exclusive access to the OpenGL's vertex buffer object with colors");
   }
 
-  /* unlock the vertex buffer object with positions, so that OpenGL can continue using it */
-  err = clEnqueueReleaseGLObjects(queue, 1, &pos_buf, 0, nullptr, nullptr);
-  if (err != CL_SUCCESS)
-  {
-    WARN("Failed to release an exclusive access to the OpenGL's vertex buffer object with positions");
-  }
-
   /* wait for OpenCL to finish processing */
   clFinish(queue);
+#endif
 
   return;
 }
@@ -394,6 +404,13 @@ bool FluidSystem::initSPHSimulation(void)
 
 bool FluidSystem::resetSPHSimulation(unsigned int part_num)
 {
+  /* initialize OpenGL shared buffer with particle positions */
+  if (!m_particle_pos_buf.bufferData(nullptr, part_num * sizeof(cl_float4), ocl::GLBuffer::WRITE_ONLY))
+  {
+    ERROR("SPH: Failed to initialize position GLBuffer");
+    return false;
+  }
+
   cl_int err = CL_SUCCESS;
 
 #define ALLOC_BUF(buf, data_type, err_msg) \
@@ -409,16 +426,43 @@ bool FluidSystem::resetSPHSimulation(unsigned int part_num)
 
   /* allocate buffers on GPU */
   ALLOC_BUF(m_velocity_buf, cl_float4, "SPH: Failed to allocate velocity buffer: ");
+  ALLOC_BUF(m_prev_velocity_buf, cl_float4, "SPH: Failed to allocate prev velocity buffer: ");
   ALLOC_BUF(m_pressure_buf, cl_float, "SPH: Failed to allocate pressure buffer: ");
   ALLOC_BUF(m_density_buf, cl_float, "SPH: Failed to allocate density buffer: ");
   ALLOC_BUF(m_force_buf, cl_float4, "SPH: Failed to allocate force buffer: ");
-  ALLOC_BUF(m_prev_velocity_buf, cl_float4, "SPH: Failed to allocate prev velocity buffer: ");
 
 #undef ALLOC_BUF
 
   /* set kernel parameters that do not change once the simulation is prepared */
+  
+  /* reset kernel arguments */
+  if (!ocl::KernelArgs(m_sph_reset_kernel, "m_sph_reset_kernel")
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_velocity_buf)
+            .arg(m_prev_velocity_buf)
+            .arg(m_pressure_buf)
+            .arg(m_density_buf)
+            .arg(m_force_buf)
+            .arg(m_volume_min)
+            .arg(m_volume_max)
+            .arg((cl_ulong) (time(nullptr))))
+  {
+    return false;
+  }
 
   /* run the reset kernel to initialize particle data */
+  cl_command_queue queue = m_cl_queue();
+
+  ocl::GLSyncHandler sync(queue, m_particle_pos_buf.getCLID());
+  if (!sync) return false;
+
+  err = clEnqueueNDRangeKernel(queue, m_sph_reset_kernel(), 1,
+                               nullptr, &m_num_particles, nullptr,
+                               0, nullptr, nullptr);
+  if (err != CL_SUCCESS)
+  {
+    WARN("Failed to enqueue SPH reset kernel");
+  }
 
   return true;
 }

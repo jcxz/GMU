@@ -5,7 +5,7 @@
 
 #include <CL/cl.hpp>
 #include <stdexcept>
-#include <array>
+#include <iostream>
 
 
 
@@ -78,8 +78,88 @@ cl_program buildProgram(const cl_context ctx,
                         const unsigned int num,
                         const char *built_options = nullptr);
 
+/**
+ * A class to initialize kernel arguments
+ */
+class KernelArgs
+{
+  public:
+    KernelArgs(cl::Kernel kernel, const char *kernel_name = "")
+      : m_kernel(kernel()), m_next_arg(0),
+        m_err(CL_SUCCESS), m_kernel_name(kernel_name)
+    {
+      assert(m_kernel != nullptr);
+    }
+
+    KernelArgs(cl_kernel kernel, const char *kernel_name = "")
+      : m_kernel(kernel), m_next_arg(0),
+        m_err(CL_SUCCESS), m_kernel_name(kernel_name)
+    {
+      assert(m_kernel != nullptr);
+    }
+
+    template <typename T>
+    KernelArgs & arg(T param)
+    { return setArgNext(sizeof(T), &param); }
+
+    template <typename T>
+    KernelArgs & arg(T param, cl_uint index)
+    { return setArgIndex(sizeof(T), &param, , index); }
+
+    template <typename T>
+    KernelArgs & arg(cl::LocalSpaceArg param)
+    { return setArgNext(param.size_, nullptr); }
+    
+    template <typename T>
+    KernelArgs & arg(cl::LocalSpaceArg param, cl_uint index)
+    { return setArgIndex(param.size_, nullptr, index); }
+
+    bool hasError(void) const { return m_err != CL_SUCCESS; }
+    cl_int error(void) const { return m_err; }
+    const char *errorString(void) const { return errorToStr(m_err); }
+    operator bool(void) const { return m_err == CL_SUCCESS; }
+
+    cl_int argIndex(void) const { return m_next_arg - 1; }
+
+  private:
+    KernelArgs & setArgNext(size_t size, const void *value)
+    {
+      if (m_err != CL_SUCCESS) return *this;
+      m_err = clSetKernelArg(m_kernel, m_next_arg++, size, value);
+      if (m_err != CL_SUCCESS)
+      {
+        std::cerr << "Failed to set argument number "
+                  << (m_next_arg - 1) << "of " << m_kernel_name
+                  << "kernel : " << errorToStr(m_err)
+                  << std::endl;
+      }
+      return *this;
+    }
+
+    KernelArgs & setArgIndex(size_t size, const void *value, cl_uint index)
+    {
+      if (m_err != CL_SUCCESS) return *this;
+      m_next_arg = index;
+      m_err = clSetKernelArg(m_kernel, m_next_arg++, size, value);
+      if (m_err != CL_SUCCESS)
+      {
+        std::cerr << "Failed to set argument number "
+                  << (m_next_arg - 1) << "of " << m_kernel_name
+                  << "kernel : " << errorToStr(m_err)
+                  << std::endl;
+      }
+      return *this;
+    }
+
+  private:
+    cl_kernel m_kernel;          // the OpenCL kernel to be setup
+    cl_uint m_next_arg;          // the number of the next argument that will be initialized
+    cl_int m_err;                // whether any error occured while processing arguments
+    const char *m_kernel_name;   // kernel's string name (for better diagnostic messages)
+};
+
 ///////////////////////////////////////////////////////////////////////////////
-// Bufer management
+// OpenGL interoperability
 
 /** Class representing a buffer that is shared between OpenCL and OpenGL */
 class GLBuffer
@@ -159,6 +239,75 @@ class GLBuffer
     GLuint m_vbo;      /// vertex buffer object of OpenGL
     cl_mem m_mem;      /// OpenCL memory object
     cl_context m_ctx;  /// OpenCL context to which the buffer is bound (not owned by this class)
+};
+
+
+/**
+ * A class to synchronize OpenGL and OpenCL memory objects
+ */
+class GLSyncHandler
+{
+  public:
+    GLSyncHandler(cl_command_queue queue, cl_mem buffer)
+      : m_queue(queue), m_num_buffers(1),
+        m_buffers(&buffer), m_err(CL_SUCCESS)
+    {
+      acquireGLObjects();
+    }
+
+    GLSyncHandler(cl_command_queue queue, cl_uint num_buffers, const cl_mem *buffers)
+      : m_queue(queue), m_num_buffers(num_buffers),
+        m_buffers(buffers), m_err(CL_SUCCESS)
+    {
+      acquireGLObjects();
+    }
+
+    ~GLSyncHandler(void)
+    {
+      /* unlock the vertex buffer object, so that OpenGL can continue using it */
+      m_err = clEnqueueReleaseGLObjects(m_queue, m_num_buffers, m_buffers, 0, nullptr, nullptr);
+      if (m_err != CL_SUCCESS)
+      {
+        std::cerr << "Failed to release an exclusive access to one of OpenGL's vertex buffer objects: "
+                  << errorToStr(m_err) << std::endl;
+      }
+      
+      /* wait for OpenCL to finish processing */
+      clFinish(m_queue);
+    }
+
+    bool hasError(void) const { return m_err != CL_SUCCESS; }
+    operator bool(void) const { return m_err == CL_SUCCESS; }
+
+  private:
+    void acquireGLObjects(void)
+    {
+      assert(m_queue != nullptr);
+      assert(m_buffers != nullptr);
+
+      /* wait for OpenGL to finish rendering */
+      glFinish();
+
+      /* acquire access to the shared vertex buffer object */
+      m_err = clEnqueueAcquireGLObjects(m_queue, m_num_buffers, m_buffers, 0, nullptr, nullptr);
+      if (m_err != CL_SUCCESS)
+      {
+        std::cerr << "Failed to acquire an exclusive access to one of OpenGL's vertex buffer objects: "
+                  << errorToStr(m_err) << std::endl;
+        return;
+      }
+    }
+
+  private:
+    // just disable copying for now
+    GLSyncHandler(const GLSyncHandler & );
+    GLSyncHandler & operator=(const GLSyncHandler & );
+
+  private:
+    cl_command_queue m_queue;
+    cl_uint m_num_buffers;
+    const cl_mem *m_buffers;
+    cl_int m_err;
 };
 
 }

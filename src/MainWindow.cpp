@@ -55,6 +55,10 @@ void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
     {
       m_fluid_system.toggleMode();
       std::cerr << m_fluid_system.modeName() << std::endl;
+      if (!m_fluid_system.reset(2025)) //20025))
+      {
+        std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
+      }
     }
   }
 

@@ -45,6 +45,8 @@ struct AssetsPath
   }
 };
 
+#define FLUIDSIM_COUNT(array) (sizeof((array)) / sizeof(*(array)))
+
 }
 
 #endif
