@@ -58,6 +58,10 @@ class ParticleSystem
       {
         throw std::runtime_error("Failed to construct ParticleSystem: OpenGL initialization failed");
       }
+
+      // initialize bounding volume
+      m_volume_min.s[0] = -15.0f; m_volume_min.s[1] = -15.0f; m_volume_min.s[2] = -15.0f; m_volume_min.s[3] = 1.0f;
+      m_volume_max.s[0] =  15.0f; m_volume_max.s[1] =  15.0f; m_volume_max.s[2] =  15.0f; m_volume_max.s[3] = 1.0f;
     }
 
     virtual ~ParticleSystem(void) { }

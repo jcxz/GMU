@@ -4,7 +4,10 @@
 float random(ulong seed, float min, float max)
 {
   seed = seed * (seed * (seed * (seed * (seed + 1u) + 1u) + 1u) +1u);
+  //printf("sph_reset: random: seed == %u\n", seed);
   float t = (float) (seed) / (float) ((ulong) (-1));
+  //printf("sph_reset: random: t == %f\n", t);
+  //printf("sph_reset: random: min == %f, max == %f\n", t, min, max);
   return mix(min, max, t);
 }
 
@@ -33,4 +36,12 @@ __kernel void sph_reset(__global float4 *position,
   pressure[gid] = 0;
   density[gid] = 0;
   force[gid] = (float4)(0.0f);
+
+  //printf("sph_reset: seed == %u\n", seed);
+  //printf("sph_reset: position[%u] == [%v4f]\n", gid, position[gid]);
+  //printf("sph_reset: position[%u] == [%v4f]\n", gid, velocity[gid]);
+  //printf("sph_reset: position[%u] == [%v4f]\n", gid, prev_velocity[gid]);
+  //printf("sph_reset: position[%u] == %f\n", gid, pressure[gid]);
+  //printf("sph_reset: position[%u] == %f\n", gid, density[gid]);
+  //printf("sph_reset: position[%u] == [%v4f]\n", gid, force[gid]);
 }
