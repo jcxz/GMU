@@ -85,6 +85,9 @@ class ParticleSystem
     // intializes OpenGL (loads models and compiles shaders)
     bool initGL(void);
 
+    void drawParticles(void);
+    void drawBoundingVolume(void);
+
   private:
     static const char *m_vert_shader;
     static const char *m_frag_shader;

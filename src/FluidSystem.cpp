@@ -116,10 +116,10 @@ bool FluidSystem::reset(unsigned int part_num)
 #define LAPKERN ((cl_float) (45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
 #define SPIKEYKERN ((cl_float) (-45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
 
-#define SLOPE ((cl_float) (1.0f))        // ???
-#define LEFTWAVE ((cl_float) (1.5f))     // ???
-#define RIGHTWAVE ((cl_float) (-1.5f))   // ???
-#define DELTATIME ((cl_float) (0.03f))   // ???
+#define SLOPE ((cl_float) (0.0f))        // ???
+#define LEFTWAVE ((cl_float) (0.0f))     // ???
+#define RIGHTWAVE ((cl_float) (0.0f))   // ???
+#define DELTATIME ((cl_float) (.003f))   // ???
 #define LIMIT ((cl_float) (200.0f))
 #define EXTSTIFFNESS ((cl_float) (10000.0f))
 #define EXTDAMPING ((cl_float) (256.0f))
@@ -222,6 +222,7 @@ bool FluidSystem::reset(unsigned int part_num)
 
 void FluidSystem::update(float time_step)
 {
+#if 1
   /* set kernel arguments that change every frame */
   cl_int err = m_sph_compute_step_kernel.setArg(16, (cl_float) (m_time));
   if (err != CL_SUCCESS)
@@ -266,6 +267,6 @@ void FluidSystem::update(float time_step)
 
   /* advance simulation time */
   m_time += time_step;   // 3.0f;
-
+#endif
   return;
 }

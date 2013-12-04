@@ -62,6 +62,14 @@ void MainWindow::onResize(int32_t width, int32_t height)
 
 void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
 {
+  if (key == SDLK_SPACE)
+  {
+    if (!m_cur_ps->reset(2025)) //20025))
+    {
+      std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
+    }
+  }
+
   if (mod & KMOD_CTRL)
   {
     if (key == SDLK_s)

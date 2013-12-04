@@ -26,7 +26,8 @@ class MainWindow : public Window
       , m_wnd_h(0)
       , m_x_angle(0.0f)
       , m_y_angle(0.0f)
-      , m_z_dist(-1.0f)
+      //, m_z_dist(-1.0f)
+      , m_z_dist(-80.0f)
     {
       /* prepare simulator */
       if (!m_cur_ps->reset(2025)) //20025))
