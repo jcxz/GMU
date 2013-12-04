@@ -36,7 +36,8 @@ class MainWindow : public Window
       }
 
       /* load fonts */
-      if (!m_text_renderer.loadFonts(utils::AssetsPath("/res/SourceSansPro-Regular.ttf")))
+      //if (!m_text_renderer.loadFonts(utils::AssetsPath("/res/SourceSansPro-Regular.ttf")))
+      if (!m_text_renderer.loadFonts(utils::AssetsPath("/res/Cousine-Regular-Latin.ttf")))
       {
         throw std::runtime_error("MainWindow: failed to load font");
       }
