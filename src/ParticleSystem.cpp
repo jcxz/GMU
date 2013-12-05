@@ -59,6 +59,9 @@ const char *ParticleSystem::m_frag_shader_particle_colors_file = "src/OpenGL/Par
 const char *ParticleSystem::m_vert_shader_uniform_color_file = "src/OpenGL/ParticleSystem_uniform_color.vert";
 const char *ParticleSystem::m_frag_shader_uniform_color_file = "src/OpenGL/ParticleSystem_uniform_color.frag";
 
+const char *ParticleSystem::m_vert_shader_bounding_volume_file = "src/OpenGL/ParticleSystem_bounding_volume.vert";
+const char *ParticleSystem::m_frag_shader_bounding_volume_file = "src/OpenGL/ParticleSystem_bounding_volume.frag";
+
 
 
 bool ParticleSystem::initCL(void)
@@ -163,7 +166,14 @@ bool ParticleSystem::initGL(void)
     return false;
   }
 
-  /* set lights */
+  if (!m_shader_bounding_volume.buildFiles(utils::AssetsPath(m_vert_shader_bounding_volume_file),
+                                           utils::AssetsPath(m_frag_shader_bounding_volume_file)))
+  {
+    ERROR("Failed to compile shaders for bounding volume program");
+    return false;
+  }
+
+  /* per particle colors program */
   GLuint pc_prog = m_shader_particle_colors.getID();
   
   glUseProgram(pc_prog);
@@ -174,6 +184,7 @@ bool ParticleSystem::initGL(void)
   glUniform3f(glGetUniformLocation(pc_prog, "light_col_d"), 1.0f, 1.0f, 1.0f);
   glUniform3f(glGetUniformLocation(pc_prog, "light_col_s"), 1.0f, 1.0f, 1.0f);
 
+  /* uniform color program */
   GLuint uc_prog = m_shader_uniform_color.getID();
   
   glUseProgram(uc_prog);
@@ -182,6 +193,17 @@ bool ParticleSystem::initGL(void)
   glUniform3f(glGetUniformLocation(uc_prog, "light_col_d"), 1.0f, 1.0f, 1.0f);
   glUniform3f(glGetUniformLocation(uc_prog, "light_col_s"), 1.0f, 1.0f, 1.0f);
   glUniform3f(glGetUniformLocation(uc_prog, "particle_col"), 0.5f, 0.5f, 1.0f);
+
+  /* bounding volume program */
+  GLuint bv_prog = m_shader_bounding_volume.getID();
+
+  glUseProgram(bv_prog);
+
+  glUniform3f(glGetUniformLocation(bv_prog, "dimensions"),
+              (m_volume_max.s[0] - m_volume_min.s[0]) * 0.5f,
+              (m_volume_max.s[1] - m_volume_min.s[1]) * 0.5f,
+              (m_volume_max.s[2] - m_volume_min.s[2]) * 0.5f);
+  glUniform3f(glGetUniformLocation(bv_prog, "col"), 1.0f, 1.0f, 1.0f);
 
   glUseProgram(0);
 
@@ -201,9 +223,11 @@ void ParticleSystem::render(const glm::mat4 & mv, const glm::mat4 & proj)
 {
   glEnable(GL_DEPTH_TEST);
 
+  /* render particle system */
   glBindVertexArray(m_particle_geom.vao);
 
   GLuint shader_id = 0;
+
   if (m_use_uniform_color)
   {
     m_shader_uniform_color.use();
@@ -237,6 +261,18 @@ void ParticleSystem::render(const glm::mat4 & mv, const glm::mat4 & proj)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glBindVertexArray(0);
+
+  /* render bounding volume */
+  if (m_draw_bounding_volume)
+  {
+    shader_id = m_shader_bounding_volume.getID();
+    glUseProgram(shader_id);
+
+    glUniformMatrix4fv(glGetUniformLocation(shader_id, "proj"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(shader_id, "mv"), 1, GL_FALSE, glm::value_ptr(mv));
+
+    glDrawArrays(GL_LINES, 0, 24);
+  }
 
   glUseProgram(0);
 

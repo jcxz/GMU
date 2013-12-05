@@ -13,16 +13,6 @@ __kernel void sph_compute_force(__global float4* forces,
                                 unsigned int numparticles,
                                 float spikeykern)
 {
-  //unsigned int threadIdxx = get_local_id(0);
-  //unsigned int threadIdxy = get_local_id(1);
-  //unsigned int blockIdxx = get_group_id(0);
-  //unsigned int blockIdxy = get_group_id(1);
-  //unsigned int gridDimx = get_num_groups(0);
-  //unsigned int blockDimx = get_local_size(0);
-  //unsigned int blockDimy = get_local_size(1);
-  
-  //unsigned int i = mul24(blockIdxx, blockDimx) + threadIdxx;
-  
   unsigned int i = get_global_id(0);
   
   forces[i] = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
@@ -35,13 +25,13 @@ __kernel void sph_compute_force(__global float4* forces,
   
   d = simscale;
   mR = smoothradius;
-  mR2 = (mR*mR);
+  mR2 = (mR * mR);
   visc = viscosity;
   vterm = lapkern * visc;
   
-  for(int j = 0; j < numparticles; j++)
+  for (int j = 0; j < numparticles; j++)
   {
-    if(i != j)
+    if (i != j)
     {
       dx = (pos[i].x - pos[j].x) * d;
       dy = (pos[i].y - pos[j].y) * d;
@@ -49,7 +39,7 @@ __kernel void sph_compute_force(__global float4* forces,
       
       dsq = (dx*dx + dy*dy + dz*dz);
       
-      if(mR2 > dsq)
+      if (mR2 > dsq)
       {
         r = sqrt(dsq);
         c = (mR - r);

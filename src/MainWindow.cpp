@@ -69,6 +69,10 @@ void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
       std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
     }
   }
+  else if (key == SDLK_b)
+  {
+    std::cerr << "Bounding volume: " << (m_cur_ps->toggleDrawBoundingVolume() ? "on" : "off") << std::endl;
+  }
 
   if (mod & KMOD_CTRL)
   {

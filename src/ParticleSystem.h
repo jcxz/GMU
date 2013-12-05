@@ -28,7 +28,12 @@ class ParticleSystem
       , m_volume_min()
       , m_volume_max()
       , m_use_uniform_color(false)
-    {
+      , m_draw_bounding_volume(true)
+    {    
+      // initialize bounding volume
+      m_volume_min.s[0] = -15.0f; m_volume_min.s[1] = -15.0f; m_volume_min.s[2] = -15.0f; m_volume_min.s[3] = 1.0f;
+      m_volume_max.s[0] =  15.0f; m_volume_max.s[1] =  15.0f; m_volume_max.s[2] =  15.0f; m_volume_max.s[3] = 1.0f;
+
 #if 0
       std::cerr << __FUNCTION__ << std::endl;
 
@@ -59,13 +64,14 @@ class ParticleSystem
       {
         throw std::runtime_error("Failed to construct ParticleSystem: OpenGL initialization failed");
       }
-
-      // initialize bounding volume
-      m_volume_min.s[0] = -15.0f; m_volume_min.s[1] = -15.0f; m_volume_min.s[2] = -15.0f; m_volume_min.s[3] = 1.0f;
-      m_volume_max.s[0] =  15.0f; m_volume_max.s[1] =  15.0f; m_volume_max.s[2] =  15.0f; m_volume_max.s[3] = 1.0f;
     }
 
     virtual ~ParticleSystem(void) { }
+
+    bool toggleDrawBoundingVolume(void)
+    {
+      return m_draw_bounding_volume = !m_draw_bounding_volume;
+    }
 
     // reset the particle system
     // initializes buffers and shared data
@@ -98,10 +104,14 @@ class ParticleSystem
     static const char *m_vert_shader_uniform_color_file;
     static const char *m_frag_shader_uniform_color_file;
 
+    static const char *m_vert_shader_bounding_volume_file;
+    static const char *m_frag_shader_bounding_volume_file;
+
   private:
     // OpenGL shaders
     ogl::ShaderProgram m_shader_particle_colors;
     ogl::ShaderProgram m_shader_uniform_color;
+    ogl::ShaderProgram m_shader_bounding_volume;
 
     // vertex buffers with sphere geometry (or the geometry of objects that will represent particles)
     geom::Model m_particle_geom;
@@ -123,8 +133,9 @@ class ParticleSystem
     cl_float4 m_volume_min;      // bounding volume minimum corner
     cl_float4 m_volume_max;      // bounding volume maximum corner
 
-    // rendering settings
-    bool m_use_uniform_color;    // whether to use the same color for all particles or per particle color
+    // rendering options
+    bool m_use_uniform_color;     // whether to use the same color for all particles or per particle color
+    bool m_draw_bounding_volume;  // whether to display bounding volume or not
 };
 
 #endif

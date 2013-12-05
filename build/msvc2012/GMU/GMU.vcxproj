@@ -122,6 +122,8 @@
     <None Include="..\..\..\src\OpenCL\sph_compute_pressure.cl" />
     <None Include="..\..\..\src\OpenCL\sph_compute_step.cl" />
     <None Include="..\..\..\src\OpenCL\sph_reset.cl" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_bounding_volume.frag" />
+    <None Include="..\..\..\src\OpenGL\ParticleSystem_bounding_volume.vert" />
     <None Include="..\..\..\src\OpenGL\ParticleSystem_particle_colors.frag" />
     <None Include="..\..\..\src\OpenGL\ParticleSystem_particle_colors.vert" />
     <None Include="..\..\..\src\OpenGL\ParticleSystem_uniform_color.frag" />

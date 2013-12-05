@@ -107,6 +107,11 @@ bool FluidSystem::reset(unsigned int part_num)
 #define SIM_SCALE ((cl_float) (0.004f))
 #define SMOOTH_RADIUS ((cl_float) (0.01f))
 #define RADIUS2 ((cl_float) ((SMOOTH_RADIUS) * (SMOOTH_RADIUS)))
+
+// m = Ro * (V / n)
+// Ro   ... hustota tekutiny
+// V    ... objem
+// n    ... pocet castic
 #define MASS ((cl_float) (0.00020543f))
 #define POLYKERN ((cl_float) (315.0f / (64.0f * 3.141592 * pow(SMOOTH_RADIUS, 9))))
 #define RESTDENSITY ((cl_float) (600.0f))
