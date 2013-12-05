@@ -62,12 +62,28 @@ void MainWindow::onResize(int32_t width, int32_t height)
 
 void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
 {
-  if (key == SDLK_SPACE)
+  if (key == SDLK_r)
   {
     if (!m_cur_ps->reset(2025)) //20025))
     {
       std::cerr << "MainWindow: failed to reset fluid simulator" << std::endl;
     }
+  }
+  else if (key == SDLK_SPACE)
+  {
+    m_cur_ps->togglePause();
+  }
+  else if (key == SDLK_w)
+  {
+    m_fluid_system->emitWave();
+  }
+  else if (key == SDLK_d)
+  {
+    m_fluid_system->toggleDrain();
+  }
+  else if (key == SDLK_f)
+  {
+    m_fluid_system->toggleFountain();
   }
   else if (key == SDLK_b)
   {

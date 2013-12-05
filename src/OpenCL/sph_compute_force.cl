@@ -15,7 +15,7 @@ __kernel void sph_compute_force(__global float4* forces,
 {
   unsigned int i = get_global_id(0);
   
-  forces[i] = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+  forces[i] = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
   
   float4 force = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
   float pterm, vterm, dterm;

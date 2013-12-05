@@ -8,6 +8,14 @@
 class FluidSystem : public ParticleSystem
 {
   public:
+    enum Effects {
+      EFFECT_DRAIN    = (1 << 0),
+      EFFECT_WAVE     = (1 << 1),
+      EFFECT_FOUNTAIN = (1 << 2),
+      EFFECT_NONE     = (0 << 0)
+    };
+
+  public:
     FluidSystem(void)
       : ParticleSystem()
       , m_sph_prog()
@@ -20,6 +28,8 @@ class FluidSystem : public ParticleSystem
       , m_density_buf()
       , m_force_buf()
       , m_prev_velocity_buf()
+      , m_effects(EFFECT_NONE)
+      , m_wave_start(0.0f)
     {
 #if 0
       std::cerr << "this: " << (void *) this << std::endl;
@@ -55,6 +65,16 @@ class FluidSystem : public ParticleSystem
 
       m_use_uniform_color = true;
     }
+
+    void activateDrain(void) { m_effects |= EFFECT_DRAIN; deactivateFountain(); }
+    void deactivateDrain(void) { m_effects &= ~(EFFECT_DRAIN); }
+    bool toggleDrain(void) { return m_effects ^= EFFECT_DRAIN; }
+
+    void emitWave(void) { m_effects |= EFFECT_WAVE; m_wave_start = m_time; }
+
+    void activateFountain(void) { m_effects |= EFFECT_FOUNTAIN; deactivateDrain(); }
+    void deactivateFountain(void) { m_effects &= ~(EFFECT_FOUNTAIN); }
+    bool toggleFountain(void) { return m_effects ^= EFFECT_FOUNTAIN; }
 
     // reset the particle system
     // initializes buffers and shared data
@@ -92,6 +112,10 @@ class FluidSystem : public ParticleSystem
     cl::Buffer m_density_buf;
     cl::Buffer m_force_buf;
     cl::Buffer m_prev_velocity_buf;
+
+    // simulation settings
+    unsigned int m_effects;
+    float m_wave_start;
 };
 
 #endif

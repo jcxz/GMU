@@ -29,6 +29,7 @@ class ParticleSystem
       , m_volume_max()
       , m_use_uniform_color(false)
       , m_draw_bounding_volume(true)
+      , m_pause(false)
     {    
       // initialize bounding volume
       m_volume_min.s[0] = -15.0f; m_volume_min.s[1] = -15.0f; m_volume_min.s[2] = -15.0f; m_volume_min.s[3] = 1.0f;
@@ -72,6 +73,8 @@ class ParticleSystem
     {
       return m_draw_bounding_volume = !m_draw_bounding_volume;
     }
+
+    bool togglePause(void) { return m_pause = !m_pause; }
 
     // reset the particle system
     // initializes buffers and shared data
@@ -136,6 +139,7 @@ class ParticleSystem
     // rendering options
     bool m_use_uniform_color;     // whether to use the same color for all particles or per particle color
     bool m_draw_bounding_volume;  // whether to display bounding volume or not
+    bool m_pause;                 // whether to pause simulation
 };
 
 #endif

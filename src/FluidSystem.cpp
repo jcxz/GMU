@@ -227,12 +227,21 @@ bool FluidSystem::reset(unsigned int part_num)
 
 void FluidSystem::update(float time_step)
 {
-#if 1
+  // check if the simulation is not paused
+  if (m_pause) return;
+
   /* set kernel arguments that change every frame */
   cl_int err = m_sph_compute_step_kernel.setArg(16, (cl_float) (m_time));
   if (err != CL_SUCCESS)
   {
     WARN("FluidSystem: Failed to set time argument: " << ocl::errorToStr(err));
+    return;
+  }
+
+  err = m_sph_compute_step_kernel.setArg(17, (cl_uint) (m_effects));
+  if (err != CL_SUCCESS)
+  {
+    WARN("FluidSystem: Failed to set flags argument: " << ocl::errorToStr(err));
     return;
   }
 
@@ -272,6 +281,15 @@ void FluidSystem::update(float time_step)
 
   /* advance simulation time */
   m_time += time_step;   // 3.0f;
-#endif
+
+  // kill the wave after 50 frames
+  if (m_effects & EFFECT_WAVE)
+  {
+    if ((m_time - m_wave_start) > (time_step * 50))
+    {
+      m_effects &= ~(EFFECT_WAVE);
+    }
+  }
+
   return;
 }
