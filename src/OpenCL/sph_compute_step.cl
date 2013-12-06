@@ -1,4 +1,7 @@
-
+/**
+ * Kod napisany podla http://www.rchoetzlein.com/eng/graphics/fluids.htm
+ * a http://joeyfladderak.com/portfolio-items/sph-fluid-simulation/
+ */
 
 #define DRAIN_MASK    (1 << 0)
 #define WAVE_MASK     (1 << 1)
@@ -6,15 +9,15 @@
 
 
 
-__kernel void sph_compute_step(__global float4* position, 
-                               __global float4* velocity, 
-                               __global float4* prevvelocity, 
+__kernel void sph_compute_step(__global float4* position,
+                               __global float4* forces,
+                               __global float4* velocity,
+                               __global float4* prevvelocity,
                                float slope,
                                float leftwave,
                                float rightwave,
                                float deltatime,
                                float limit,
-                               __global float4* forces,
                                float extstiffness,
                                float extdamping,
                                float radius,
@@ -24,6 +27,7 @@ __kernel void sph_compute_step(__global float4* position,
                                float mass,
                                float time,
                                uint flags)
+                               //float4 gravitation)
 {
   unsigned int threadIdxx = get_local_id(0);
   unsigned int threadIdxy = get_local_id(1);
@@ -42,7 +46,10 @@ __kernel void sph_compute_step(__global float4* position,
   float4 min, max;
   float adj;
   float SL, SL2, ss, rad;
-  float stiff, damp, speed, diff; 
+  //float stiff;
+  //float damp;
+  float speed;
+  float diff; 
   SL = limit;
   SL2 = SL*SL;
   
@@ -50,8 +57,8 @@ __kernel void sph_compute_step(__global float4* position,
   float4 vel = velocity[i];
   float4 prevvel = prevvelocity[i];
   
-  stiff = extstiffness;
-  damp = extdamping;
+  //stiff = extstiffness;
+  //damp = extdamping;
   rad = radius;
   min = volumemin;
   max = volumemax;
@@ -71,7 +78,8 @@ __kernel void sph_compute_step(__global float4* position,
   if (diff > 0.0001f)
   {
     norm.x = -slope; norm.z = 0.0f; norm.y = 1.0f - slope;// = float4(-0, 0, 1.0 - 0, 0);
-    adj = stiff * diff - damp * dot(norm, prevvel);
+    //adj = stiff * diff - damp * dot(norm, prevvel);
+    adj = extstiffness * diff - extdamping * dot(norm, prevvel);
     accel += adj * norm;
   }
   
@@ -79,7 +87,8 @@ __kernel void sph_compute_step(__global float4* position,
   if (diff > 0.0001f)
   {
     norm.x = 0.0f; norm.z = -1.0f; norm.y = 0.0f;  //float4( 0, 0, -1, 0 );
-    adj = stiff * diff - damp * dot(norm, prevvel);
+    //adj = stiff * diff - damp * dot(norm, prevvel);
+    adj = extstiffness * diff - extdamping * dot(norm, prevvel);
     accel.x += adj * norm.x; 
     accel.y += adj * norm.y; 
     accel.z += adj * norm.z;
@@ -90,7 +99,8 @@ __kernel void sph_compute_step(__global float4* position,
   if (diff > 0.0001f)
   {
     norm.x = 1.0f; norm.y = 0.0f; norm.z = 0.0f;  //float4( 1.0, 0, 0, 0 );
-    adj = (leftwave + 1.0f) * stiff * diff - damp * dot(norm, prevvel);
+    //adj = (leftwave + 1.0f) * stiff * diff - damp * dot(norm, prevvel);
+    adj = (leftwave + 1.0f) * extstiffness * diff - extdamping * dot(norm, prevvel);
     accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;                  
   }
   
@@ -98,7 +108,8 @@ __kernel void sph_compute_step(__global float4* position,
   if (diff > 0.0001f)
   {
     norm.x = -1.0f; norm.y = 0.0f; norm.z = 0.0f;  //float4( -1, 0, 0, 0 );
-    adj = (rightwave+1.0f) * stiff * diff - damp * dot(norm, prevvel );
+    //adj = (rightwave+1.0f) * stiff * diff - damp * dot(norm, prevvel );
+    adj = (rightwave+1.0f) * extstiffness * diff - extdamping * dot(norm, prevvel );
     accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
   }
   
@@ -107,14 +118,16 @@ __kernel void sph_compute_step(__global float4* position,
   if (diff > 0.0001f)
   {
     norm.x = 0.0f; norm.z = 1.0f; norm.y = 0.0f;  //float4( 0, 1, 0, 0 );
-    adj = stiff * diff - damp * dot(norm, prevvel );
+    //adj = stiff * diff - damp * dot(norm, prevvel );
+    adj = extstiffness * diff - extdamping * dot(norm, prevvel );
     accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
   }
   diff = 2.0f * rad - (max.z - pos.z) * ss;
   if (diff > 0.0001f)
   {
     norm.x = 0.0f; norm.z = -1.0f; norm.y = 0.0f;  //float4( 0, -1, 0, 0 );
-    adj = stiff * diff - damp * dot(norm, prevvel);
+    //adj = stiff * diff - damp * dot(norm, prevvel);
+    adj = extstiffness * diff - extdamping * dot(norm, prevvel);
     accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
   }
 
@@ -143,7 +156,8 @@ __kernel void sph_compute_step(__global float4* position,
     if (diff < 2*radius && diff > 0.0001f && (fabs(pos.x)>3 || fabs(pos.y)>3) )
     {
       norm = (float4) (0, 0, 1, 0);
-      adj = stiff * diff - damp * dot(norm, prevvelocity[i]);
+      //adj = stiff * diff - damp * dot(norm, prevvelocity[i]);
+      adj = extstiffness * diff - extdamping * dot(norm, prevvelocity[i]);
       accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
     }
   }
@@ -169,6 +183,7 @@ __kernel void sph_compute_step(__global float4* position,
   } 
 
   accel.y += -9.8f;  //float4(0, -9.8, 0, 0);
+  //accel += gravitation;
   
   // Leapfrog Integration ----------------------------
   vnext = accel;                          

@@ -159,6 +159,7 @@ void MainWindow::onMouseMove(uint32_t buttons, int32_t x, int32_t y, int32_t xre
     {
       m_x_angle += yrel;
       m_y_angle += xrel;
+      m_fluid_system->setRotation(m_x_angle, m_y_angle);
     }
     else if (buttons & SDL_BUTTON_RMASK)
     {

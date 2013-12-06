@@ -1,55 +1,59 @@
-// calculations largely based on R.C. Hoetzlein's implementation
-// http://www.rchoetzlein.com/eng/graphics/fluids.htm
+/**
+ * Kod napisany podla http://www.rchoetzlein.com/eng/graphics/fluids.htm
+ * a http://joeyfladderak.com/portfolio-items/sph-fluid-simulation/
+ */
  
-__kernel void sph_compute_force(__global float4* forces,
+__kernel void sph_compute_force(__global float4* pos,
+                                __global float* density,
+                                __global float* pressure,
+                                __global float4* forces,
+                                __global float4* vel,
                                 float simscale,
                                 float smoothradius,
-                                float viscosity,
-                                float lapkern,
-                                __global float4* pos,
-                                __global float* pressure,
-                                __global float* density,
-                                __global float4* vel,
-                                unsigned int numparticles,
-                                float spikeykern)
+                                float radius2,
+                                //float viscosity,
+                                //float lapkern,
+                                float vterm,
+                                float spikykern_half,
+                                unsigned int numparticles)
 {
   unsigned int i = get_global_id(0);
-  
-  forces[i] = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
-  
-  float4 force = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
-  float pterm, vterm, dterm;
-  float c, r, d, dsq;
-  float dx, dy, dz;
-  float mR, mR2, visc;
-  
-  d = simscale;
-  mR = smoothradius;
-  mR2 = (mR * mR);
-  visc = viscosity;
-  vterm = lapkern * visc;
-  
-  for (int j = 0; j < numparticles; j++)
+
+  float4 force = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
+
+  //float vterm = lapkern * viscosity;
+
+  for (int j = 0; j < i; ++j)
   {
-    if (i != j)
+    float4 d = (pos[i] - pos[j]) * simscale;
+    float sqr = dot(d, d);
+
+    if (radius2 > sqr)
     {
-      dx = (pos[i].x - pos[j].x) * d;
-      dy = (pos[i].y - pos[j].y) * d;
-      dz = (pos[i].z - pos[j].z) * d;
-      
-      dsq = (dx*dx + dy*dy + dz*dz);
-      
-      if (mR2 > dsq)
-      {
-        r = sqrt(dsq);
-        c = (mR - r);
-        pterm = -0.5f * c * spikeykern * (pressure[i] + pressure[j]) / r;
-        dterm = c * density[i] * density[j];
-        
-        force.x += (pterm * dx + vterm * (vel[j].x - vel[i].x)) * dterm;
-        force.y += (pterm * dy + vterm * (vel[j].y - vel[i].y)) * dterm;
-        force.z += (pterm * dz + vterm * (vel[j].z - vel[i].z)) * dterm;
-      }
+      float r = sqrt(sqr);
+      float c = (smoothradius - r);
+      //float pterm = -0.5f * c * spikeykern * (pressure[i] + pressure[j]) / r;
+      float pterm = c * spikykern_half * (pressure[i] + pressure[j]) / r;
+      float dterm = c * density[i] * density[j];
+    
+      force += (pterm * d + vterm * (vel[j] - vel[i])) * dterm;
+    }
+  }
+
+  for (int j = i + 1; j < numparticles; ++j)
+  {
+    float4 d = (pos[i] - pos[j]) * simscale;
+    float sqr = dot(d, d);
+    
+    if (radius2 > sqr)
+    {
+      float r = sqrt(sqr);
+      float c = (smoothradius - r);
+      //float pterm = -0.5f * c * spikeykern * (pressure[i] + pressure[j]) / r;
+      float pterm = c * spikykern_half * (pressure[i] + pressure[j]) / r;
+      float dterm = c * density[i] * density[j];
+
+      force += (pterm * d + vterm * (vel[j] - vel[i])) * dterm;
     }
   }
   

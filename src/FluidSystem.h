@@ -30,6 +30,8 @@ class FluidSystem : public ParticleSystem
       , m_prev_velocity_buf()
       , m_effects(EFFECT_NONE)
       , m_wave_start(0.0f)
+      , m_rx(0)
+      , m_ry(0)
     {
 #if 0
       std::cerr << "this: " << (void *) this << std::endl;
@@ -76,6 +78,8 @@ class FluidSystem : public ParticleSystem
     void deactivateFountain(void) { m_effects &= ~(EFFECT_FOUNTAIN); }
     bool toggleFountain(void) { deactivateDrain(); return (m_effects ^= EFFECT_FOUNTAIN) != 0; }
 
+    void setRotation(float rx, float ry) { m_rx = rx; m_ry = ry; }
+
     // reset the particle system
     // initializes buffers and shared data
     virtual bool reset(unsigned int part_num);
@@ -116,6 +120,8 @@ class FluidSystem : public ParticleSystem
     // simulation settings
     unsigned int m_effects;
     float m_wave_start;
+    int m_rx;
+    int m_ry;
 };
 
 #endif

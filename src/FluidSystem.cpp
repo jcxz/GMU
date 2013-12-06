@@ -22,6 +22,48 @@ const unsigned int FluidSystem::m_sph_kernel_files_size = sizeof(m_sph_kernel_fi
 
 
 
+namespace {
+
+cl_float4 calcGravitationVector(int rx, int ry)
+{
+  double dir_s, dir_c, mult_x, mult_y, mult_z;
+  int corr_z = 1;
+  
+  double sinx = sin((double) rx * (3.141592f / 180.0f));
+  if (sinx < 0)
+  {
+    dir_s = sinx;
+    dir_c = 1+sinx;
+  }
+  else
+  {
+    dir_s = sinx;
+    dir_c = 1-sinx;
+  }
+
+  if (abs(rx) % 360 > 90 && abs(rx) % 360 < 270)
+  //if (fmod(abs(rx), 360) > 90 && fmod(abs(rx), 360) < 270)
+  {
+      corr_z = -1;
+  }
+  
+  mult_y = cos((double) ry * (3.141592f / 180.0f));
+  mult_x = sin((double) ry * (3.141592f / 180.0f)) * dir_s;
+  mult_z = sin((double) ry * (3.141592f / 180.0f)) * dir_c;
+  
+  cl_float4 F;
+  
+  F.s[0] = mult_x * -9.81f;
+  F.s[1] = mult_y * -9.81f;
+  F.s[2] = corr_z * mult_z * 9.81f;
+  F.s[3] = 0.0f;
+
+  return F; /* vektor gravitace */
+}
+
+}
+
+
 
 bool FluidSystem::init(void)
 {
@@ -116,10 +158,13 @@ bool FluidSystem::reset(unsigned int part_num)
 #define POLYKERN ((cl_float) (315.0f / (64.0f * 3.141592 * pow(SMOOTH_RADIUS, 9))))
 #define RESTDENSITY ((cl_float) (600.0f))
 #define INTSTIFFNESS ((cl_float) (1.0f))
+#define MASS_POLYKERN ((cl_float) ((MASS) * (POLYKERN)))
 
 #define VISCOSITY ((cl_float) (0.2f))
 #define LAPKERN ((cl_float) (45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
+#define VTERM ((cl_float) ((LAPKERN) * (VISCOSITY)))
 #define SPIKEYKERN ((cl_float) (-45.0f / (3.141592 * pow(SMOOTH_RADIUS, 6))))
+#define SPIKEYKERN_HALF ((cl_float) ((SPIKEYKERN) * (-0.5f)))
 
 #define SLOPE ((cl_float) (0.0f))        // ???
 #define LEFTWAVE ((cl_float) (0.0f))     // ???
@@ -136,10 +181,11 @@ bool FluidSystem::reset(unsigned int part_num)
             .arg(m_density_buf)
             .arg(m_pressure_buf)
             .arg(SIM_SCALE)
-            .arg(SMOOTH_RADIUS)
+            //.arg(SMOOTH_RADIUS)
             .arg(RADIUS2)
-            .arg(MASS)
-            .arg(POLYKERN)
+            //.arg(MASS)
+            //.arg(POLYKERN)
+            .arg(MASS_POLYKERN)
             .arg(RESTDENSITY)
             .arg(INTSTIFFNESS)
             .arg((unsigned int) (m_num_particles)))
@@ -149,17 +195,19 @@ bool FluidSystem::reset(unsigned int part_num)
 
   /* compute force kernel's arguments */
   if (!ocl::KernelArgs(m_sph_compute_force_kernel, "m_sph_compute_force_kernel")
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_density_buf)
+            .arg(m_pressure_buf)
             .arg(m_force_buf)
+            .arg(m_velocity_buf)
             .arg(SIM_SCALE)
             .arg(SMOOTH_RADIUS)
-            .arg(VISCOSITY)
-            .arg(LAPKERN)
-            .arg(m_particle_pos_buf.getCLID())
-            .arg(m_pressure_buf)
-            .arg(m_density_buf)
-            .arg(m_velocity_buf)
-            .arg((unsigned int) (m_num_particles))
-            .arg(SPIKEYKERN))
+            .arg(RADIUS2)
+            //.arg(VISCOSITY)
+            //.arg(LAPKERN)
+            .arg(VTERM)
+            .arg(SPIKEYKERN_HALF)
+            .arg((unsigned int) (m_num_particles)))
   {
     return false;
   }
@@ -167,6 +215,7 @@ bool FluidSystem::reset(unsigned int part_num)
   /* compute step kernel's arguments */
   if (!ocl::KernelArgs(m_sph_compute_step_kernel, "m_sph_compute_step_kernel")
             .arg(m_particle_pos_buf.getCLID())
+            .arg(m_force_buf)
             .arg(m_velocity_buf)
             .arg(m_prev_velocity_buf)
             .arg(SLOPE)
@@ -174,7 +223,6 @@ bool FluidSystem::reset(unsigned int part_num)
             .arg(RIGHTWAVE)
             .arg(DELTATIME)
             .arg(LIMIT)
-            .arg(m_force_buf)
             .arg(EXTSTIFFNESS)
             .arg(EXTDAMPING)
             .arg(RADIUS)
@@ -244,6 +292,13 @@ void FluidSystem::update(float time_step)
     WARN("FluidSystem: Failed to set flags argument: " << ocl::errorToStr(err));
     return;
   }
+
+  //err = m_sph_compute_step_kernel.setArg(18, calcGravitationVector(m_rx, m_ry));
+  //if (err != CL_SUCCESS)
+  //{
+  //  WARN("FluidSystem: Failed to set gravitation argument: " << ocl::errorToStr(err));
+  //  return;
+  //}
 
   /* synchronise with OpenGL */
   cl_command_queue queue = m_cl_queue();
