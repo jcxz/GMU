@@ -119,6 +119,7 @@ __kernel void sph_compute_step(__global float4* position,
   }
 
   /* drain */
+#if 1
   if (flags & DRAIN_MASK)
   {
     float dx = (0 - pos.x) * ss;            // dist in cm
@@ -127,17 +128,34 @@ __kernel void sph_compute_step(__global float4* position,
     float dsq = (dx * dx + dy * dy + dz * dz);
     if (0.0001f > dsq)
     {
-      pos.x = volumemin.x;
-      pos.y = volumemax.y;
+      pos.x = volumemin.x * 0.5f;
+      pos.y = volumemax.y * 0.5f;
       pos.z = volumemin.z;
+      accel.z += 50;
+      accel.x += 1;
+      accel.y += 20;
     }
   }
+#else
+  if (flags & DRAIN_MASK)
+  {
+    diff = 2 * radius - (pos.z - min.z-15 ) * ss;
+    if (diff < 2*radius && diff > 0.0001f && (fabs(pos.x)>3 || fabs(pos.y)>3) )
+    {
+      norm = (float4) (0, 0, 1, 0);
+      adj = stiff * diff - damp * dot(norm, prevvelocity[i]);
+      accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
+    }
+  }
+#endif
   
+  /* wave */
   if (flags & WAVE_MASK)
   {
-    if (pos.x < 0) accel.x += 50;
+    if (pos.x < 0) accel.x += 20;
   }
   
+  /* fountain */
   if (flags & FOUNTAIN_MASK)
   {
     float dx = (0 - pos.x) * ss;            // dist in cm

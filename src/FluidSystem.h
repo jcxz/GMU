@@ -66,15 +66,15 @@ class FluidSystem : public ParticleSystem
       m_use_uniform_color = true;
     }
 
-    void activateDrain(void) { m_effects |= EFFECT_DRAIN; deactivateFountain(); }
+    void activateDrain(void) { deactivateFountain(); m_effects |= EFFECT_DRAIN; }
     void deactivateDrain(void) { m_effects &= ~(EFFECT_DRAIN); }
-    bool toggleDrain(void) { return m_effects ^= EFFECT_DRAIN; }
+    bool toggleDrain(void) { deactivateFountain(); return (m_effects ^= EFFECT_DRAIN) != 0; }
 
     void emitWave(void) { m_effects |= EFFECT_WAVE; m_wave_start = m_time; }
 
-    void activateFountain(void) { m_effects |= EFFECT_FOUNTAIN; deactivateDrain(); }
+    void activateFountain(void) { deactivateDrain(); m_effects |= EFFECT_FOUNTAIN; }
     void deactivateFountain(void) { m_effects &= ~(EFFECT_FOUNTAIN); }
-    bool toggleFountain(void) { return m_effects ^= EFFECT_FOUNTAIN; }
+    bool toggleFountain(void) { deactivateDrain(); return (m_effects ^= EFFECT_FOUNTAIN) != 0; }
 
     // reset the particle system
     // initializes buffers and shared data

@@ -56,7 +56,7 @@ bool genSphere(Model & model, float r)
 
   /* set up mesh parameters */
   model.mode = GL_TRIANGLE_STRIP;
-  model.count = ((tilt_end - tilt_start) / tilt_step + 1) * ((ang_end - ang_start) / ang_step + 1) * 2; // * 2 because there are two vertices generated each iteration //19 * 13 * 2;
+  model.count = (GLsizei) (((tilt_end - tilt_start) / tilt_step + 1) * ((ang_end - ang_start) / ang_step + 1) * 2); // * 2 because there are two vertices generated each iteration //19 * 13 * 2;
 
   DBG("((tilt_end - tilt_start + 1) / tilt_step) : " << ((tilt_end - tilt_start) / tilt_step + 1));
   DBG("((ang_end - ang_start + 1) / ang_step)    : " << ((ang_end - ang_start) / ang_step + 1));
@@ -92,12 +92,12 @@ bool genSphere(Model & model, float r)
   {
     for (float ang = ang_start; ang <= ang_end; ang += ang_step)
     {
-	  float x = sin(ang * DEGtoRAD) * cos(tilt * DEGtoRAD);
-	  float y = cos(ang * DEGtoRAD) * cos(tilt * DEGtoRAD);
-	  float z = sin(tilt * DEGtoRAD);
-      float x1 = sin(ang * DEGtoRAD) * cos((tilt + tilt_step) * DEGtoRAD);
-      float y1 = cos(ang * DEGtoRAD) * cos((tilt + tilt_step) * DEGtoRAD);
-      float z1 = sin((tilt + tilt_step) * DEGtoRAD);
+	  float x = float(sin(ang * DEGtoRAD) * cos(tilt * DEGtoRAD));
+	  float y = float(cos(ang * DEGtoRAD) * cos(tilt * DEGtoRAD));
+	  float z = float(sin(tilt * DEGtoRAD));
+      float x1 = float(sin(ang * DEGtoRAD) * cos((tilt + tilt_step) * DEGtoRAD));
+      float y1 = float(cos(ang * DEGtoRAD) * cos((tilt + tilt_step) * DEGtoRAD));
+      float z1 = float(sin((tilt + tilt_step) * DEGtoRAD));
 
       // normal 1
       *data++ = x;      *data++ = y;      *data++ = z;

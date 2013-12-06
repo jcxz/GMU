@@ -57,7 +57,7 @@ void OGLWindow::onRedraw(void)
   m_shader_prog.use();
 
   glUniformMatrix4fv(glGetUniformLocation(m_shader_prog.getID(), "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
-  glUniform1f(glGetUniformLocation(m_shader_prog.getID(), "window_height"), m_wnd_h);
+  glUniform1f(glGetUniformLocation(m_shader_prog.getID(), "window_height"), (GLfloat) m_wnd_h);
 
   assert(m_cur_model != nullptr);
   // bind the model to be drawn

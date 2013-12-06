@@ -37,7 +37,7 @@ const char *loadFile(const char * const filename, size_t *file_size)
 
   /* find out the file's size */
   stream.seekg(0, std::ios::end);
-  std::size_t size = stream.tellg();
+  std::size_t size = (size_t) stream.tellg();
   stream.seekg(0, std::ios::beg);
 
   /* allocate memory and read file contents */

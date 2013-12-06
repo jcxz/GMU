@@ -96,8 +96,8 @@ bool ParticleSystem::initCL(void)
     return false;
   }
 
-  std::cerr << "m_cl_ctx: " << m_cl_ctx() << std::endl;
-  std::cerr << "m_cl_queue: " << m_cl_queue() << std::endl;
+  //std::cerr << "m_cl_ctx: " << m_cl_ctx() << std::endl;
+  //std::cerr << "m_cl_queue: " << m_cl_queue() << std::endl;
 
   std::vector<cl::Device> device_list(1, device);
 

@@ -132,11 +132,11 @@ bool FluidSystem::reset(unsigned int part_num)
 
   /* compute pressure kernel's arguments */
   if (!ocl::KernelArgs(m_sph_compute_pressure_kernel, "m_sph_compute_pressure_kernel")
+            .arg(m_particle_pos_buf.getCLID())
             .arg(m_density_buf)
             .arg(m_pressure_buf)
             .arg(SIM_SCALE)
             .arg(SMOOTH_RADIUS)
-            .arg(m_particle_pos_buf.getCLID())
             .arg(RADIUS2)
             .arg(MASS)
             .arg(POLYKERN)
