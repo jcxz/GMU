@@ -29,115 +29,93 @@ __kernel void sph_compute_step(__global float4* position,
                                uint flags)
                                //float4 gravitation)
 {
-  unsigned int threadIdxx = get_local_id(0);
-  unsigned int threadIdxy = get_local_id(1);
-  unsigned int blockIdxx = get_group_id(0);
-  unsigned int blockIdxy = get_group_id(1);
-  unsigned int gridDimx = get_num_groups(0);
-  unsigned int blockDimx = get_local_size(0);
-  unsigned int blockDimy = get_local_size(1);
+  unsigned int i = get_global_id(0);
   
-  unsigned int i = mul24(blockIdxx, blockDimx) + threadIdxx;
-  //unsigned int i = get_global_id(0);
-  
-  float4 norm;
-  float4 accel;
-  float4 vnext;
-  float4 min, max;
+  float4 norm = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
   float adj;
-  float SL, SL2, ss, rad;
-  //float stiff;
-  //float damp;
-  float speed;
   float diff; 
-  SL = limit;
-  SL2 = SL*SL;
   
   float4 pos = position[i];
   float4 vel = velocity[i];
   float4 prevvel = prevvelocity[i];
+  float4 accel = forces[i] * mass;
   
-  //stiff = extstiffness;
-  //damp = extdamping;
-  rad = radius;
-  min = volumemin;
-  max = volumemax;
-  ss = simscale;
-  
-  accel = forces[i];
-  accel *= mass;
-  
-  speed = accel.x * accel.x + accel.y * accel.y + accel.z * accel.z;
-  if (speed > SL2)
+  float speed = accel.x * accel.x + accel.y * accel.y + accel.z * accel.z;
+  if (speed > (limit * limit))
   {
-    accel *= SL / sqrt(speed);
+    accel *= limit / sqrt(speed);
   }
   
   // Z Axis wall
-  diff = 2.0f * rad - (pos.y - min.y - (pos.x - min.x) * slope) * ss;
+  diff = 2.0f * radius - (pos.y - volumemin.y - (pos.x - volumemin.x) * slope) * simscale;
   if (diff > 0.0001f)
   {
-    norm.x = -slope; norm.z = 0.0f; norm.y = 1.0f - slope;// = float4(-0, 0, 1.0 - 0, 0);
-    //adj = stiff * diff - damp * dot(norm, prevvel);
+    norm.x = -slope;
+    norm.z = 0.0f;
+    norm.y = 1.0f - slope;  // = float4(-0, 0, 1.0 - 0, 0);
     adj = extstiffness * diff - extdamping * dot(norm, prevvel);
     accel += adj * norm;
   }
   
-  diff = 2.0f * rad - (max.y - pos.y) * ss;
+  diff = 2.0f * radius - (volumemax.y - pos.y) * simscale;
   if (diff > 0.0001f)
   {
-    norm.x = 0.0f; norm.z = -1.0f; norm.y = 0.0f;  //float4( 0, 0, -1, 0 );
-    //adj = stiff * diff - damp * dot(norm, prevvel);
+    norm.x = 0.0f;
+    norm.z = -1.0f;
+    norm.y = 0.0f;  //float4( 0, 0, -1, 0 );
     adj = extstiffness * diff - extdamping * dot(norm, prevvel);
-    accel.x += adj * norm.x; 
-    accel.y += adj * norm.y; 
-    accel.z += adj * norm.z;
+    accel += adj * norm;
   }
   
   // X-axis walls
-  diff = 2.0f * rad - (pos.x - min.x + (sin(time * 10.0f) - 1.0f + (pos.y * 0.025f) * 0.25f) * leftwave) * ss;   
+  diff = 2.0f * radius - (pos.x - volumemin.x + (sin(time * 10.0f) - 1.0f + (pos.y * 0.025f) * 0.25f) * leftwave) * simscale;   
   if (diff > 0.0001f)
   {
-    norm.x = 1.0f; norm.y = 0.0f; norm.z = 0.0f;  //float4( 1.0, 0, 0, 0 );
-    //adj = (leftwave + 1.0f) * stiff * diff - damp * dot(norm, prevvel);
+    norm.x = 1.0f;
+    norm.y = 0.0f;
+    norm.z = 0.0f;  //float4( 1.0, 0, 0, 0 );
     adj = (leftwave + 1.0f) * extstiffness * diff - extdamping * dot(norm, prevvel);
-    accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;                  
+    accel += adj * norm;                
   }
   
-  diff = 2.0f * rad - (max.x - pos.x + (sin(time * 10.0f) - 1.0f) * rightwave) * ss;  
+  diff = 2.0f * radius - (volumemax.x - pos.x + (sin(time * 10.0f) - 1.0f) * rightwave) * simscale;  
   if (diff > 0.0001f)
   {
-    norm.x = -1.0f; norm.y = 0.0f; norm.z = 0.0f;  //float4( -1, 0, 0, 0 );
-    //adj = (rightwave+1.0f) * stiff * diff - damp * dot(norm, prevvel );
+    norm.x = -1.0f;
+    norm.y = 0.0f;
+    norm.z = 0.0f;  //float4( -1, 0, 0, 0 );
     adj = (rightwave+1.0f) * extstiffness * diff - extdamping * dot(norm, prevvel );
-    accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
+    accel += adj * norm;
   }
   
   // Y-axis walls
-  diff = 2.0f * rad - (pos.z - min.z) * ss;           
+  diff = 2.0f * radius - (pos.z - volumemin.z) * simscale;
   if (diff > 0.0001f)
   {
-    norm.x = 0.0f; norm.z = 1.0f; norm.y = 0.0f;  //float4( 0, 1, 0, 0 );
-    //adj = stiff * diff - damp * dot(norm, prevvel );
+    norm.x = 0.0f;
+    norm.z = 1.0f;
+    norm.y = 0.0f;  //float4( 0, 1, 0, 0 );
     adj = extstiffness * diff - extdamping * dot(norm, prevvel );
-    accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
+    accel += adj * norm;
   }
-  diff = 2.0f * rad - (max.z - pos.z) * ss;
+  
+  diff = 2.0f * radius - (volumemax.z - pos.z) * simscale;
   if (diff > 0.0001f)
   {
-    norm.x = 0.0f; norm.z = -1.0f; norm.y = 0.0f;  //float4( 0, -1, 0, 0 );
-    //adj = stiff * diff - damp * dot(norm, prevvel);
+    norm.x = 0.0f;
+    norm.z = -1.0f;
+    norm.y = 0.0f;  //float4( 0, -1, 0, 0 );
     adj = extstiffness * diff - extdamping * dot(norm, prevvel);
-    accel.x += adj * norm.x; accel.y += adj * norm.y; accel.z += adj * norm.z;
+    accel += adj * norm;
   }
 
   /* drain */
 #if 1
   if (flags & DRAIN_MASK)
   {
-    float dx = (0 - pos.x) * ss;            // dist in cm
-    float dy = (volumemin.y - pos.y) * ss;
-    float dz = (0 - pos.z) * ss;
+    float dx = (0 - pos.x) * simscale;            // dist in cm
+    float dy = (volumemin.y - pos.y) * simscale;
+    float dz = (0 - pos.z) * simscale;
     float dsq = (dx * dx + dy * dy + dz * dz);
     if (0.0001f > dsq)
     {
@@ -152,7 +130,7 @@ __kernel void sph_compute_step(__global float4* position,
 #else
   if (flags & DRAIN_MASK)
   {
-    diff = 2 * radius - (pos.z - min.z-15 ) * ss;
+    diff = 2 * radius - (pos.z - volumemin.z-15 ) * simscale;
     if (diff < 2*radius && diff > 0.0001f && (fabs(pos.x)>3 || fabs(pos.y)>3) )
     {
       norm = (float4) (0, 0, 1, 0);
@@ -172,9 +150,9 @@ __kernel void sph_compute_step(__global float4* position,
   /* fountain */
   if (flags & FOUNTAIN_MASK)
   {
-    float dx = (0 - pos.x) * ss;            // dist in cm
-    float dy = (volumemin.y - pos.y) * ss;
-    float dz = (0 - pos.z)*ss;
+    float dx = (0 - pos.x) * simscale;            // dist in cm
+    float dy = (volumemin.y - pos.y) * simscale;
+    float dz = (0 - pos.z) * simscale;
     float dsq = (dx * dx + dy * dy + dz * dz);
     if (0.0005f > dsq)
     {
@@ -186,14 +164,10 @@ __kernel void sph_compute_step(__global float4* position,
   //accel += gravitation;
   
   // Leapfrog Integration ----------------------------
-  vnext = accel;                          
-  vnext *= deltatime;
-  vnext += vel;                       // v(t+1/2) = v(t-1/2) + a(t) dt
-  prevvel = vel;
-  prevvel += vnext;
-  prevvel *= 0.5f;                    // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5     used to compute forces later
+  float4 vnext = accel * deltatime + vel;  // v(t+1/2) = v(t-1/2) + a(t) dt
+  prevvel = (vel + vnext) * 0.5f;          // v(t+1) = [v(t-1/2) + v(t+1/2)] * 0.5     used to compute forces later
   vel = vnext;
-  vnext *= deltatime/ss;
+  vnext *= deltatime / simscale;
   pos += vnext;                       // p(t+1) = p(t) + v(t+1/2) dt
   
   velocity[i] = vel;
