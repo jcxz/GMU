@@ -1,5 +1,10 @@
 #### ignore specific files ###
 
+#### ignore specific directories ###
+/experiments
+/backups
+/odovzdanie
+
 #### ignore all vim swap files ###
 *.swp
 
