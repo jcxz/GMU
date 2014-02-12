@@ -263,7 +263,8 @@ bool FluidSystem::reset(unsigned int part_num)
 
   err = clEnqueueNDRangeKernel(queue, m_sph_reset_kernel(), 1,
                                nullptr, &m_num_particles, nullptr,
-                               0, nullptr, nullptr);
+                               0, nullptr, m_stats.event("sph_reset"));
+                               //0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue SPH reset kernel");
@@ -310,7 +311,8 @@ void FluidSystem::update(float time_step)
   /* compute pressure */
   err = clEnqueueNDRangeKernel(queue, m_sph_compute_pressure_kernel(), 1,
                                nullptr, &m_num_particles, nullptr,
-                               0, nullptr, nullptr);
+                               0, nullptr, m_stats.event("sph_compute_pressure"));
+                               //0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
@@ -319,7 +321,8 @@ void FluidSystem::update(float time_step)
   /* compute force */
   err = clEnqueueNDRangeKernel(queue, m_sph_compute_force_kernel(), 1,
                                nullptr, &m_num_particles, nullptr,
-                               0, nullptr, nullptr);
+                               0, nullptr, m_stats.event("sph_compute_force"));
+                               //0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));
@@ -328,7 +331,8 @@ void FluidSystem::update(float time_step)
   /* integrate */
   err = clEnqueueNDRangeKernel(queue, m_sph_compute_step_kernel(), 1,
                                nullptr, &m_num_particles, nullptr,
-                               0, nullptr, nullptr);
+                               0, nullptr, m_stats.event("sph_compute_step"));
+                               //0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));

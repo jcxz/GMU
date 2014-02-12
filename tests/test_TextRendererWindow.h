@@ -14,7 +14,7 @@ class TextRendererWindow : public Window
         m_text_renderer(this)
     {
       //if (!m_text_renderer.loadFonts("../../../res/SourceSansPro-Regular.ttf"))
-      if (!m_text_renderer.loadFonts(utils::AssetsPath("/res/SourceSansPro-Regular.ttf")))
+      if (!m_text_renderer.loadFonts(utils::fs::AssetsPath("/res/SourceSansPro-Regular.ttf")))
       {
         throw std::runtime_error("TextRendererWindow: failed to load font");
       }

@@ -1,11 +1,18 @@
 #ifndef OCL_LIB_H
 #define OCL_LIB_H
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX               // disable min, max macros from Windows headers
+
 #include "ogl_lib.h"
+#include "utils.h"
 
 #include <CL/cl.hpp>
 #include <stdexcept>
 #include <iostream>
+#include <unordered_map>
+#include <ostream>
+#include <memory>
 
 
 
@@ -241,7 +248,6 @@ class GLBuffer
     cl_context m_ctx;  /// OpenCL context to which the buffer is bound (not owned by this class)
 };
 
-
 /**
  * A class to synchronize OpenGL and OpenCL memory objects
  */
@@ -312,6 +318,157 @@ class GLSyncHandler
     cl_uint m_num_buffers;
     const cl_mem *m_buffers;
     cl_int m_err;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Performance countersand event handlers
+
+class Event
+{
+  public:
+    Event(cl_event event = nullptr) : m_event(event) { }
+    Event(Event && other) : m_event(other.m_event) { other.m_event = nullptr; }
+    ~Event(void) { clReleaseEvent(m_event); }
+
+    Event & operator=(Event && other) { std::swap(m_event, other.m_event); }
+
+    void setCallback(void (CL_CALLBACK * cb)(cl_event, cl_int, void *),
+                     void *data = nullptr,
+                     cl_int status = CL_COMPLETE)
+    {
+      if (m_event != nullptr)
+      {
+        cl_int err = clSetEventCallback(m_event, status, cb, (void *) data);
+        if (err != CL_SUCCESS)
+        {
+          std::cerr << "WARNING: Failed to set event callback: "
+                    << errorToStr(err) << " (" << err << ")"
+                    << std::endl;
+        }
+      }
+    }
+
+    operator cl_event (void) const { return m_event; }
+    operator cl_event * (void) { return &m_event; }
+
+  private:
+    Event(const Event & );
+    Event & operator=(const Event & );
+
+  private:
+    cl_event m_event;
+};
+
+class PerfStatsRecord
+{
+  public:
+    PerfStatsRecord(void)
+      : m_count(0)
+      , m_queue_time()
+      , m_submit_time()
+      , m_exec_time()
+    {
+    }
+   
+    void add(cl_ulong queue_time, cl_ulong submit_time, cl_ulong exec_time)
+    {
+      m_queue_time.add(queue_time, m_count);
+      m_submit_time.add(submit_time, m_count);
+      m_exec_time.add(exec_time, m_count);
+      m_count++;
+    }
+
+    void print(const std::string & name, std::ostream & os);
+
+  private:
+    unsigned int m_count;                              /// the number of times this record has been recorded
+    utils::stats::Aggregator<cl_ulong> m_queue_time;   /// aggregated statistical records for in queue time
+    utils::stats::Aggregator<cl_ulong> m_submit_time;  /// aggregated statistical records for submit time
+    utils::stats::Aggregator<cl_ulong> m_exec_time;    /// aggregated statistical records for execution time
+};
+
+class PerfStats
+{
+  private:
+    struct EventProxy
+    {
+      PerfStatsRecord *m_stats_rec;
+      cl_event m_event;
+
+      EventProxy(PerfStatsRecord *stats_rec)
+        : m_stats_rec(stats_rec), m_event(nullptr)
+      {
+      }
+
+      ~EventProxy(void)
+      {
+        if (m_event != nullptr)
+        {
+          clSetEventCallback(m_event, CL_COMPLETE, cl_callback, (void *) m_stats_rec);
+        }
+      }
+
+      operator cl_event * (void) { return &m_event; }
+    };
+
+    struct EventProxyRef
+    {
+      PerfStatsRecord *m_stats_rec;
+      Event & m_event;
+
+      EventProxyRef(Event & event, PerfStatsRecord *stats_rec)
+        : m_stats_rec(stats_rec), m_event(event)
+      {
+      }
+
+      ~EventProxyRef(void) { m_event.setCallback(cl_callback, m_stats_rec); }
+      operator cl_event * (void) { return m_event; }
+    };
+
+    static void CL_CALLBACK cl_callback(cl_event ev, cl_int status, void *stats_rec);
+
+  private:
+    typedef std::unordered_map<std::string, std::unique_ptr<PerfStatsRecord>> tContainer;
+
+  public:
+    PerfStats(void) : m_stats() { }
+
+    void clear(void) { return m_stats.clear(); }
+    
+    EventProxyRef event(Event & event, const std::string & name = std::string())
+    { return EventProxyRef(event, insertStat(name)); }
+    
+    EventProxy event(const std::string & name = std::string())
+    { return EventProxy(insertStat(name)); }
+
+    friend std::ostream & operator<<(std::ostream & os, const PerfStats & stats)
+    {
+      for (auto & it : stats.m_stats)
+      {
+        it.second->print(it.first, os);
+        os << std::endl;
+      }
+      return os;
+    }
+
+  private:
+    PerfStatsRecord *insertStat(const std::string & name)
+    {
+      tContainer::iterator it = m_stats.find(name);
+      if (it == m_stats.end())
+      {
+        PerfStatsRecord *ptr = new PerfStatsRecord;
+        m_stats.insert(std::make_pair(name, std::unique_ptr<PerfStatsRecord>(ptr)));
+        return ptr;
+      }
+      else
+      {
+        return it->second.get();
+      }
+    }
+
+  private:
+    tContainer m_stats;
 };
 
 }

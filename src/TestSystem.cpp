@@ -123,7 +123,8 @@ void TestSystem::update(float time_step)
 
   err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
                                nullptr, &m_num_particles, nullptr,
-                               0, nullptr, nullptr);
+                               0, nullptr, m_stats.event("gen_part_positions"));
+                               //0, nullptr, nullptr);
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));

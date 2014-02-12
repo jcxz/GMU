@@ -369,7 +369,7 @@ bool ShaderProgram::attachShader(GLenum type, const char *source, GLuint *shader
 bool ShaderProgram::attachShaderFile(GLenum type, const char *source_file, GLuint *shader_id)
 {
   std::string source;
-  if (!utils::loadFile(source_file, &source))
+  if (!utils::fs::loadFile(source_file, &source))
   {
     return false;
   }

@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;$(ProjectDir)\..\..\..\src;$(ProjectDir)\..\..\..\tests;$(AMDAPPSDKROOT)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(AMDAPPSDKROOT)\include;$(MY_LIB_PATH)\SDL2-2.0.1\include;$(MY_LIB_PATH)\SDL2_image-2.0.0\include;$(MY_LIB_PATH)\SDL2_ttf-2.0.12\include;$(MY_LIB_PATH)\glew-1.9.0\include;$(MY_LIB_PATH)\glm;$(ProjectDir)\..\..\..\src;$(ProjectDir)\..\..\..\tests</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,7 +92,8 @@
     <ClCompile Include="..\..\..\src\ogl_lib.cpp" />
     <ClCompile Include="..\..\..\src\ParticleSystem.cpp" />
     <ClCompile Include="..\..\..\src\TestSystem.cpp" />
-    <ClCompile Include="..\..\..\src\utils.cpp" />
+    <ClCompile Include="..\..\..\src\utils\utils_fs.cpp" />
+    <ClCompile Include="..\..\..\src\utils\utils_graphics.cpp" />
     <ClCompile Include="..\..\..\src\Window.cpp" />
     <ClCompile Include="..\..\..\src\TextRenderer.cpp" />
     <ClCompile Include="..\..\..\tests\test_OGLWindow.cpp" />
@@ -111,6 +112,9 @@
     <ClInclude Include="..\..\..\src\sdl_libs.h" />
     <ClInclude Include="..\..\..\src\TestSystem.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
+    <ClInclude Include="..\..\..\src\utils\utils_fs.h" />
+    <ClInclude Include="..\..\..\src\utils\utils_graphics.h" />
+    <ClInclude Include="..\..\..\src\utils\utils_stats.h" />
     <ClInclude Include="..\..\..\src\Window.h" />
     <ClInclude Include="..\..\..\src\TextRenderer.h" />
     <ClInclude Include="..\..\..\tests\test_OGLWindow.h" />

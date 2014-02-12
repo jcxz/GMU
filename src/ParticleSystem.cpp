@@ -129,7 +129,7 @@ bool ParticleSystem::initCL(void)
   }
 
   /* create command queue */
-  m_cl_queue = cl::CommandQueue(m_cl_ctx, device, 0, &err);
+  m_cl_queue = cl::CommandQueue(m_cl_ctx, device, CL_QUEUE_PROFILING_ENABLE, &err);
   if (err != CL_SUCCESS)
   {
     ERROR("Failed to create OpenCL command queue: " << ocl::errorToStr(err));
@@ -152,22 +152,22 @@ bool ParticleSystem::initGL(void)
 
   /* compile shaders */
   //if (!m_shader.build(m_vert_shader, m_frag_shader))
-  if (!m_shader_particle_colors.buildFiles(utils::AssetsPath(m_vert_shader_particle_colors_file),
-                                           utils::AssetsPath(m_frag_shader_particle_colors_file)))
+  if (!m_shader_particle_colors.buildFiles(utils::fs::AssetsPath(m_vert_shader_particle_colors_file),
+                                           utils::fs::AssetsPath(m_frag_shader_particle_colors_file)))
   {
     ERROR("Failed to compile shaders for particle colors program");
     return false;
   }
 
-  if (!m_shader_uniform_color.buildFiles(utils::AssetsPath(m_vert_shader_uniform_color_file),
-                                         utils::AssetsPath(m_frag_shader_uniform_color_file)))
+  if (!m_shader_uniform_color.buildFiles(utils::fs::AssetsPath(m_vert_shader_uniform_color_file),
+                                         utils::fs::AssetsPath(m_frag_shader_uniform_color_file)))
   {
     ERROR("Failed to compile shaders for uniform color program");
     return false;
   }
 
-  if (!m_shader_bounding_volume.buildFiles(utils::AssetsPath(m_vert_shader_bounding_volume_file),
-                                           utils::AssetsPath(m_frag_shader_bounding_volume_file)))
+  if (!m_shader_bounding_volume.buildFiles(utils::fs::AssetsPath(m_vert_shader_bounding_volume_file),
+                                           utils::fs::AssetsPath(m_frag_shader_bounding_volume_file)))
   {
     ERROR("Failed to compile shaders for bounding volume program");
     return false;

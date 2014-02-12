@@ -1,6 +1,9 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX               // disable min, max macros from Windows headers
+
 #include "debug.h"
 
 #include <SDL.h>

@@ -51,7 +51,7 @@
 # define FLUIDSIM_LINE __LINE__
 # define FLUIDSIM_FUNC_PLAIN __FUNCTION__
 #if defined(FLUIDSIM_CC_MSVC)
-# define HOLOREN_FUNC __FUNCSIG__
+# define FLUIDSIM_FUNC __FUNCSIG__
 #elif defined(FLUIDSIM_CC_GCC)
 # define FLUIDSIM_FUNC __PRETTY_FUNCTION__
 #else

@@ -30,6 +30,7 @@ class ParticleSystem
       , m_use_uniform_color(false)
       , m_draw_bounding_volume(true)
       , m_pause(false)
+      , m_stats()
     {    
       // initialize bounding volume
       m_volume_min.s[0] = -15.0f; m_volume_min.s[1] = -15.0f; m_volume_min.s[2] = -15.0f; m_volume_min.s[3] = 1.0f;
@@ -67,7 +68,10 @@ class ParticleSystem
       }
     }
 
-    virtual ~ParticleSystem(void) { }
+    virtual ~ParticleSystem(void)
+    {
+      std::cerr << "Performance statistics:\n" <<  m_stats << std::endl;
+    }
 
     bool toggleDrawBoundingVolume(void)
     {
@@ -140,6 +144,9 @@ class ParticleSystem
     bool m_use_uniform_color;     // whether to use the same color for all particles or per particle color
     bool m_draw_bounding_volume;  // whether to display bounding volume or not
     bool m_pause;                 // whether to pause simulation
+
+    // statistics
+    ocl::PerfStats m_stats;
 };
 
 #endif

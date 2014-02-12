@@ -3,6 +3,8 @@
 #include "debug.h"
 #include "utils.h"
 
+#include <iomanip>
+
 
 
 namespace ocl {
@@ -110,8 +112,8 @@ bool selectGLDeviceAndPlatform(cl_device_id *device, cl_platform_id *platform)
 #else
   cl_context_properties props[] = {
 #if defined(FLUIDSIM_OS_UNIX)
-    CL_GL_CONTEXT_KHR, (cl_context_properties) glXGetCurrentContext(), 
-    CL_GLX_DISPLAY_KHR, (cl_context_properties) glXGetCurrentDisplay(), 
+    CL_GL_CONTEXT_KHR, (cl_context_properties) glXGetCurrentContext(),
+    CL_GLX_DISPLAY_KHR, (cl_context_properties) glXGetCurrentDisplay(),
     CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr,
 #elif defined(FLUIDSIM_OS_WIN)
     CL_GL_CONTEXT_KHR, (cl_context_properties) wglGetCurrentContext(),
@@ -133,7 +135,7 @@ bool selectGLDeviceAndPlatform(cl_device_id *device, cl_platform_id *platform)
     return false;
   }
 
-  /* got through all the available platforms and find the one
+  /* go through all the available platforms and find the one
      that contains the OpenGL device */
   for (cl::Platform p : platform_list)
   {
@@ -216,11 +218,11 @@ cl_program buildProgram(const cl_context ctx,
 
   for (unsigned int i = 0; i < num; ++i)
   {
-    programs[i] = utils::loadFile(utils::AssetsPath(program_files[i]));
+    programs[i] = utils::fs::loadFile(utils::fs::AssetsPath(program_files[i]));
     if (programs[i] == nullptr)
     {
       std::cerr << "Failed to load program file: "
-                << utils::AssetsPath(program_files[i]) << std::endl;
+                << utils::fs::AssetsPath(program_files[i]) << std::endl;
       /* if loading failed delete all sofar loaded programs */
       for (unsigned int j = 0; j < i; ++j)
       {
@@ -229,7 +231,7 @@ cl_program buildProgram(const cl_context ctx,
       return nullptr;
     }
   }
-  
+
   /* construct the program object */
   cl_int err = CL_SUCCESS;
   cl_program program = clCreateProgramWithSource(ctx, num, programs, nullptr, &err);
@@ -305,6 +307,77 @@ bool GLBuffer::bufferData(const GLvoid *data, GLsizeiptr size, AccessType at, GL
   m_mem = mem;
 
   return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Performance counters
+
+void PerfStatsRecord::print(const std::string & name, std::ostream & os)
+{
+  os << "+----------------------------------------------------------------------+" << std::endl;
+  os << "| " << std::setw(50) << std::left << name << " | " << std::setw(8) << std::right << m_count << " events |" << std::endl;
+  os << "+----------------+-----------------+-----------------+-----------------+" << std::endl;
+  os << "|    Type        |     min (ms)    |     max (ms)    |     avg (ms)    |" << std::endl;
+  os << "+----------------+-----------------+-----------------+-----------------+" << std::endl;
+
+  os << std::left;
+  os << "| Queue time     | " << std::setw(15) << (m_queue_time.min() * 1.0e-6)  << " | "
+                              << std::setw(15) << (m_queue_time.max() * 1.0e-6)  << " | "
+                              << std::setw(15) << (m_queue_time.avg() * 1.0e-6)  << " |"
+                              << std::endl;
+  os << "| Submit time    | " << std::setw(15) << (m_submit_time.min() * 1.0e-6) << " | "
+                              << std::setw(15) << (m_submit_time.max() * 1.0e-6) << " | "
+                              << std::setw(15) << (m_submit_time.avg() * 1.0e-6) << " |"
+                              << std::endl;
+  os << "| Execution time | " << std::setw(15) << (m_exec_time.min() * 1.0e-6)   << " | "
+                              << std::setw(15) << (m_exec_time.max() * 1.0e-6)   << " | "
+                              << std::setw(15) << (m_exec_time.avg() * 1.0e-6)   << " |"
+                              << std::endl;
+  os << "+----------------+-----------------+-----------------+-----------------+" << std::endl;
+
+  os << std::right;
+
+  return;
+}
+
+
+void CL_CALLBACK PerfStats::cl_callback(cl_event ev, cl_int status, void *stats_rec)
+{
+  cl_ulong time_queued = 0;
+  cl_ulong time_submited = 0;
+  cl_ulong time_started = 0;
+  cl_ulong time_finished = 0;
+  cl_int err = CL_SUCCESS;
+  
+  err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_QUEUED, sizeof(time_queued), &time_queued, nullptr);
+  if (err != CL_SUCCESS) WARN("Failed to query queued time: " << ocl::errorToStr(err) << " (" << err << ")");
+
+  err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_SUBMIT, sizeof(time_submited), &time_submited, nullptr);
+  if (err != CL_SUCCESS) WARN("Failed to query submit time: " << ocl::errorToStr(err) << " (" << err << ")");
+
+  err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_START, sizeof(time_started), &time_started, nullptr);
+  if (err != CL_SUCCESS) WARN("Failed to query start time: " << ocl::errorToStr(err) << " (" << err << ")");
+
+  err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_END, sizeof(time_finished), &time_finished, nullptr);
+  if (err != CL_SUCCESS) WARN("Failed to query end time: " << ocl::errorToStr(err) << " (" << err << ")");
+
+  //LIBOCL_INFO("time_queued   : " << time_queued);
+  //LIBOCL_INFO("time_submited : " << time_submited);
+  //LIBOCL_INFO("time_started  : " << time_started);
+  //LIBOCL_INFO("time_finished : " << time_finished);
+
+  //LIBOCL_INFO("queued   : " << (time_submited - time_queued));
+  //LIBOCL_INFO("submited : " << (time_started - time_submited));
+  //LIBOCL_INFO("finished : " << (time_finished - time_started));
+
+  static_cast<PerfStatsRecord *>(stats_rec)->add(time_submited - time_queued,
+                                                 time_started - time_submited,
+                                                 time_finished - time_started);
+  
+  //clReleaseEvent(ev);
+
+  return;
 }
 
 }
