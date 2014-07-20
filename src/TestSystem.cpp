@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2014 Matus Fedorko <xfedor01@stud.fit.vutbr.cz>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "TestSystem.h"
 #include "global.h"
 #include "debug.h"
@@ -12,7 +32,8 @@
 //const char *FluidSystem::m_part_pos_kernel_file = "/src/OpenCL/gen_rand_particles.cl";
 
 const char *TestSystem::m_test_kernel_files[] = {
-  "/src/OpenCL/gen_rand_particles.cl"
+  "/src/OpenCL/gen_rand_particles.cl",
+  "/src/OpenCL/polar_spiral.cl"
 };
 
 const unsigned int TestSystem::m_test_kernel_files_size =  sizeof(m_test_kernel_files) /
@@ -37,6 +58,13 @@ bool TestSystem::init(void)
   {
     ERROR("Failed to create particle generation kernel for Test simulation: "
           << ocl::errorToStr(err));
+    return false;
+  }
+
+  m_polar_spiral_kernel = cl::Kernel(m_test_prog, "polar_spiral", &err);
+  if (err != CL_SUCCESS)
+  {
+    ERROR("Failed to create polar spiral generator kernel: " << ocl::errorToStr(err));
     return false;
   }
 
@@ -66,6 +94,15 @@ bool TestSystem::reset(unsigned int part_num)
             .arg(m_particle_pos_buf.getCLID())
             .arg(m_particle_col_buf.getCLID()))
             //.arg((cl_ulong) (time(nullptr))))
+  {
+    return false;
+  }
+
+  cl_float3 position = { 0.0f, 0.0f, 0.0f };
+  if (!ocl::KernelArgs(m_polar_spiral_kernel, "m_polar_spiral_kernel")
+            .arg(m_particle_pos_buf.getCLID())
+            .arg(m_particle_col_buf.getCLID())
+            .arg(position))
   {
     return false;
   }
@@ -108,7 +145,13 @@ bool TestSystem::reset(unsigned int part_num)
 
 void TestSystem::update(float time_step)
 {
-  cl_int err = m_test_kernel.setArg(2, cl_ulong(time(nullptr) + m_time));
+  cl_int err = CL_SUCCESS;
+
+  if (m_spiral)
+    err = m_polar_spiral_kernel.setArg(3, cl_ulong(time(nullptr) + m_time));
+  else
+    err = m_test_kernel.setArg(2, cl_ulong(time(nullptr) + m_time));
+
   if (err != CL_SUCCESS)
   {
     WARN("TestSystem: Failed to set seed argument: " << ocl::errorToStr(err));
@@ -121,10 +164,19 @@ void TestSystem::update(float time_step)
   ocl::GLSyncHandler sync(queue, FLUIDSIM_COUNT(buffers), buffers);
   if (!sync) return;
 
-  err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
-                               nullptr, &m_num_particles, nullptr,
-                               0, nullptr, m_stats.event("gen_part_positions"));
-                               //0, nullptr, nullptr);
+  if (m_spiral)
+  {
+    err = clEnqueueNDRangeKernel(queue, m_polar_spiral_kernel(), 1,
+                                 nullptr, &m_num_particles, nullptr,
+                                 0, nullptr, m_stats.event("polar_spiral"));
+  }
+  else
+  {
+    err = clEnqueueNDRangeKernel(queue, m_test_kernel(), 1,
+                                 nullptr, &m_num_particles, nullptr,
+                                 0, nullptr, m_stats.event("gen_part_positions"));
+  }
+
   if (err != CL_SUCCESS)
   {
     WARN("Failed to enqueue test simulation kernel: " << ocl::errorToStr(err));

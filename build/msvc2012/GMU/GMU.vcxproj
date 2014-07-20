@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\src\OpenCL\gen_rand_particles.cl" />
+    <None Include="..\..\..\src\OpenCL\polar_spiral.cl" />
     <None Include="..\..\..\src\OpenCL\sph_compute_force.cl" />
     <None Include="..\..\..\src\OpenCL\sph_compute_pressure.cl" />
     <None Include="..\..\..\src\OpenCL\sph_compute_step.cl" />

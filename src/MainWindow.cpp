@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2014 Matus Fedorko <xfedor01@stud.fit.vutbr.cz>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "MainWindow.h"
 
 #include <glm/glm.hpp>
@@ -60,15 +80,19 @@ void MainWindow::onRedraw(void)
 
   glm::mat4 mv = glm::rotate(
                       glm::rotate(
-                           glm::translate(
-                                glm::mat4(),
-                                glm::vec3(0.0f, 0.0f, m_z_dist)
+                           glm::rotate(
+                                glm::translate(
+                                     glm::mat4(),
+                                     glm::vec3(0.0f, 0.0f, m_z_dist)
+                                ),
+                                m_x_angle,
+                                glm::vec3(1.0f, 0.0f, 0.0f)
                            ),
-                           m_x_angle,
-                           glm::vec3(1.0f, 0.0f, 0.0f)
+                           m_y_angle,
+                           glm::vec3(0.0f, 1.0f, 0.0f)
                       ),
-                      m_y_angle,
-                      glm::vec3(0.0f, 1.0f, 0.0f)
+                      m_z_angle,
+                      glm::vec3(0.0f, 0.0f, 1.0f)
                  );
 
   glm::mat4 proj = glm::perspective(45.0f, float(m_wnd_w) / float(m_wnd_h), 0.1f, 1000.0f);
@@ -101,9 +125,20 @@ void MainWindow::onKeyDown(SDL_Keycode key, uint16_t mod)
 {
   switch (key)
   {
+    // TODO: fix this with numeric keypad
+    case SDLK_2: m_x_angle += 10.0f; break;
+    case SDLK_8: m_x_angle -= 10.0f; break;
+    case SDLK_4: m_y_angle -= 10.0f; break;
+    case SDLK_6: m_y_angle += 10.0f; break;
+    case SDLK_7: m_z_angle += 10.0f; break;
+    case SDLK_9: m_z_angle -= 10.0f; break;
+    
+    case SDLK_5: m_x_angle = 0.0f; m_y_angle = 0.0f; m_z_angle = 0.0f; break;
+
     case SDLK_d:     m_fluid_system->toggleDrain();    break;
     case SDLK_f:     m_fluid_system->toggleFountain(); break;
     case SDLK_w:     m_fluid_system->emitWave();       break;
+    case SDLK_s:     m_test_system->toggleSpiral();    break;
     case SDLK_h:     m_display_help = !m_display_help; break;
     case SDLK_i:     m_display_info = !m_display_info; break;
     case SDLK_SPACE: m_cur_ps->togglePause();          break;
