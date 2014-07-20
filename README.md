@@ -1,7 +1,7 @@
 #About#
 
 This is a school project that implements a fluid particle system in OpenCL
-and visulizes it using modern OpenGL 3.
+and visulizes it using modern OpenGL&nbsp;3.
 
 #Compilation#
 
@@ -9,7 +9,7 @@ and visulizes it using modern OpenGL 3.
   - you will also need to set environment variable `MY_LIB_PATH` to point
     to folder with all necessary libraries 
  
-#Used libraries nad frameworks#
+#Used libraries and frameworks#
 
   - SDL 2.0.1
   - SDL2_image 2.0.0
